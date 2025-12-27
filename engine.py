@@ -4,11 +4,10 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import time
-from datetime import datetime
 from io import BytesIO
 from engine import AuraEngine, get_city_data 
 
-# --- UI CONFIGURATION ---
+# --- UI CONFIGURATION & CYBERPUNK THEME ---
 st.set_page_config(page_title="AURAMASTER | Sovereign Urban OS", layout="wide")
 
 st.markdown("""
@@ -34,11 +33,10 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 1. LIVE CARBON TICKER ---
-ticker_val = np.random.uniform(28.4, 29.1)
+# --- LIVE CARBON TICKER ---
 st.markdown(f"""
     <div class="ticker-bar">
-        LIVE MARKET: CARBON CREDIT (EU-ETS) $ {round(ticker_val, 2)} ▲ | 
+        LIVE MARKET: CARBON CREDIT $ {round(np.random.uniform(28, 29), 2)} ▲ | 
         WIND VECTOR: NE 12.4 KM/H | 
         SATELLITE SYNC: ACTIVE
     </div>
@@ -52,16 +50,14 @@ if 'protocol' not in st.session_state:
 # --- SIDEBAR ---
 with st.sidebar:
     st.title("🛡️ SOVEREIGN v5.2")
-    st.info("AUTH: LEVEL-A CLEARANCE")
     cities = get_city_data()
     city_name = st.selectbox("📍 GEOSPATIAL FOCUS", list(cities.keys()))
-    
-    st.subheader("🤖 AI AGENT OVERRIDE")
+    st.markdown("---")
     green = st.slider("Forestry Density", 0.0, 1.0, 0.45)
     albedo = st.slider("Albedo Surface Force", 0.0, 1.0, 0.35)
     aqi = st.slider("Atmospheric PM2.5", 50, 500, 150)
 
-# --- AI PHYSICS ENGINE ---
+# --- AI LOGIC ---
 city = cities[city_name]
 aerosol_heat = (aqi - 100) * 0.035 if aqi > 100 else 0
 final_temp = st.session_state.engine.run_simulation(green, albedo, city['hum'], city['base']) + aerosol_heat
@@ -69,13 +65,13 @@ delta = city['base'] - final_temp
 msg, risk_lvl = st.session_state.engine.predict_health_risk(final_temp, city['hum'])
 co2, revenue = st.session_state.engine.calculate_carbon_credits(delta)
 
-# --- APEX DASHBOARD ---
+# --- DASHBOARD ---
 st.title(f"THERMAL DEFENSE GRID: {city_name.upper()}")
 st.markdown('<div class="main-stats">', unsafe_allow_html=True)
 c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("TEMP REDUCTION", f"-{round(delta, 1)}°C", "AI OPTIMIZED")
+c1.metric("TEMP REDUCTION", f"-{round(delta, 1)}°C")
 c2.metric("THREAT LEVEL", risk_lvl)
-c3.metric("GRID STABILITY", f"{85 + int(delta)}%", "+V2G ACTIVE")
+c3.metric("GRID STABILITY", f"{85 + int(delta)}%")
 c4.metric("WATER RECLAIMED", f"{int(delta*190)}k L")
 c5.metric("CARBON ROI", f"₹{int(revenue*84)} L")
 st.markdown('</div>', unsafe_allow_html=True)
@@ -84,28 +80,20 @@ tabs = st.tabs(["🛰️ 3D DIGITAL TWIN", "🚑 BIO-HEALTH AI", "⚡ ENERGY ARB
 
 with tabs[0]:
     st.markdown('<div class="feature-header">NEURAL WIND VECTORING & 3D CANYONS</div>', unsafe_allow_html=True)
-    st.info("💨 AI ANALYSIS: North-East Wind Corridor detected. Prioritizing 'Cool Flushing' through urban core.")
-    
     b_data = pd.DataFrame({
         "lat": [city['lat'] + np.random.normal(0, 0.007) for _ in range(120)],
         "lon": [city['lon'] + np.random.normal(0, 0.007) for _ in range(120)],
         "height": [np.random.randint(50, 550) for _ in range(120)],
         "heat": [np.random.randint(150, 255) for _ in range(120)]
     })
-    
     view = pdk.ViewState(latitude=city['lat'], longitude=city['lon'], zoom=14, pitch=60)
-    # 3D Layer
     layer = pdk.Layer("ColumnLayer", data=b_data, get_position="[lon, lat]", get_elevation="height", 
                       radius=35, get_fill_color="[heat, 40, 60, 200]", pickable=True)
-    
     st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/dark-v10', initial_view_state=view, layers=[layer]))
 
 with tabs[1]:
-    st.markdown('<div class="feature-header">SATELLITE THERMAL ANOMALY DETECTION</div>', unsafe_allow_html=True)
-    st.warning(f"⚠️ **Anomaly Detected:** Heat signature in South-East {city_name} exceeds safety baseline by 12%.")
-    st.error(f"**Aerosol Forcing:** High pollution is trapping {round(aerosol_heat, 2)}°C of thermal energy.")
-    
-    # Heat Gauge
+    st.markdown('<div class="feature-header">BIO-THERMAL STRESS ANALYSIS</div>', unsafe_allow_html=True)
+    st.error(f"**Aerosol Forcing:** PM2.5 levels are trapping {round(aerosol_heat, 2)}°C of heat.")
     fig = go.Figure(go.Indicator(
         mode = "gauge+number", value = final_temp,
         title = {'text': "District Wet Bulb Temperature"},
@@ -116,16 +104,14 @@ with tabs[1]:
 with tabs[2]:
     st.markdown('<div class="feature-header">V2G ENERGY & GRID SELF-HEALING</div>', unsafe_allow_html=True)
     st.write(f"Grid Status: **REBALANCING**. V2G Buffer: **{int(delta*18)} MWh**.")
-    # Real-time simulation chart
-    st.line_chart(pd.DataFrame(np.random.randn(20, 2), columns=['Grid Frequency', 'V2G Load Relief']))
+    st.line_chart(pd.DataFrame(np.random.randn(20, 2), columns=['Grid Frequency', 'V2G Relief']))
 
 with tabs[3]:
     st.markdown('<div class="feature-header">SOVEREIGN POLICY MANIFEST</div>', unsafe_allow_html=True)
-    manifest = f"SOVEREIGN MANIFEST: {city_name}\n" + "-"*30 + \
-               f"\nMitigation Delta: {round(delta, 1)}C\nCarbon Revenue: ₹{int(revenue*84)}L\nStatus: Secure"
+    manifest = f"SOVEREIGN MANIFEST: {city_name}\n" + "-"*30 + f"\nDelta: {round(delta, 1)}C\nRevenue: ₹{int(revenue*84)}L"
     st.download_button("📥 DOWNLOAD DATA-AUTH MANIFEST", manifest, file_name=f"Manifest_{city_name}.txt")
 
-# --- FINAL PROTOCOL ---
+# --- PROTOCOL ---
 st.divider()
 if st.button("🔴 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
     st.session_state.protocol = True
@@ -133,16 +119,9 @@ if st.button("🔴 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
 if st.session_state.protocol:
     st.snow()
     placeholder = st.empty()
-    steps = [
-        "📡 Establishing Satellite Infrared Uplink...",
-        "🧠 Deploying Sky-View Factor (SVF) Neural Mapping...",
-        "🌪️ Calculating Fluid Dynamics for Wind Corridors...",
-        "🏗️ Triggering Albedo-Force across Industrial Sectors...",
-        "⚡ Synchronizing V2G Grid Balancing...",
-        "✅ PROTOCOL ENGAGED: District Optimization Complete."
-    ]
+    steps = ["📡 Establishing Sat Uplink...", "🧠 Neural SVF Mapping...", "🌪️ Wind Dynamics Calculation...", "✅ PROTOCOL ENGAGED."]
     log = ""
     for step in steps:
         log += f"> {step}<br>"
         placeholder.markdown(f'<div class="terminal-log">{log}</div>', unsafe_allow_html=True)
-        time.sleep(0.6)
+        time.sleep(0.5)
