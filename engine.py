@@ -1,79 +1,34 @@
 import numpy as np
 
 class AuraEngine:
-    def __init__(self):
-        self.base_albedo = 0.15  # Standard asphalt/concrete
-        self.target_temp = 25.0  # Ideal urban temp
+    def run_simulation(self, green, albedo, humidity, base_temp):
+        # Physics: Cooling efficiency drops as humidity rises (Wet Bulb effect)
+        efficiency = 1.0 - (humidity * 0.25)
+        mitigation = (green * 14.0 + albedo * 9.5) * efficiency
+        return max(base_temp - mitigation, 22.0)
 
-    def run_simulation(self, green_cover, albedo_boost, humidity, ambient_temp):
-        """
-        Advanced Urban Heat Island (UHI) Mitigation Formula.
-        Calculates cooling based on Evapotranspiration (Trees) and 
-        Radiative Forcing (Albedo).
-        """
-        # Cooling from Trees: 10% green cover can drop temp by ~1.2°C
-        tree_cooling = green_cover * 12.0 
-        
-        # Cooling from Albedo: Reflecting solar radiation
-        albedo_cooling = albedo_boost * 8.0
-        
-        # Humidity penalty: High humidity reduces evapotranspiration efficiency
-        efficiency = 1.0 - (humidity * 0.3)
-        
-        final_mitigation = (tree_cooling + albedo_cooling) * efficiency
-        return max(ambient_temp - final_mitigation, 20.0)
-
-    def calculate_svf_impact(self, building_density):
-        """
-        Sky View Factor (SVF) Simulation.
-        Measures how much heat is trapped in 'Urban Canyons'.
-        """
-        # SVF ranges from 0 (closed canyon) to 1 (open field)
-        svf = max(1.0 - (building_density / 1000), 0.1)
-        # Heat trapping increases as SVF decreases
-        trapped_heat = (1.0 - svf) * 4.5 
+    def calculate_svf(self, density):
+        # Sky View Factor: 1.0 is open sky, 0.1 is deep urban canyon
+        svf = max(1.0 - (density / 1000), 0.1)
+        trapped_heat = (1.0 - svf) * 5.5
         return svf, trapped_heat
 
     def predict_health_risk(self, temp, humidity):
-        """Heat Index based health risk assessment."""
-        heat_index = temp + 0.55 * (humidity * 100 - 55) # Simplified formula
-        
-        if heat_index > 45:
-            return "🔴 EXTREME DANGER: High risk of Heatstroke.", "CRITICAL"
-        elif heat_index > 38:
-            return "🟠 WARNING: Severe exhaustion possible.", "HIGH"
-        elif heat_index > 30:
-            return "🟡 CAUTION: Fatigue during physical activity.", "MODERATE"
-        else:
-            return "🟢 STABLE: Low thermal stress.", "LOW"
+        heat_index = temp + (0.55 * (humidity * 100 - 55))
+        if heat_index > 42: return "🔴 CRITICAL: IMMEDIATE THERMAL INTERVENTION REQUIRED", "LEVEL 5"
+        if heat_index > 35: return "🟠 SEVERE: HEAT EXHAUSTION PROTOCOL ACTIVE", "LEVEL 3"
+        return "🟢 STABLE: THERMAL LOADS WITHIN NOMINAL RANGE", "LEVEL 1"
 
-    def calculate_carbon_credits(self, temp_reduction):
-        """Monetizes cooling into Carbon Credits (Tons of CO2 saved)."""
-        # Assumption: 1°C drop saves ~5% of AC energy in a district
-        co2_saved = temp_reduction * 450  # Tons of CO2
-        market_price = 25  # USD per Ton
-        return co2_saved, co2_saved * market_price
-
-    def simulate_airflow_vectors(self, lat, lon):
-        """Generates wind flow data for visualization."""
-        x, y = np.meshgrid(np.linspace(lat-0.02, lat+0.02, 10), 
-                           np.linspace(lon-0.02, lon+0.02, 10))
-        u = np.cos(x) * 0.1 # Simulated wind X
-        v = np.sin(y) * 0.1 # Simulated wind Y
-        return x, y, u, v
+    def calculate_carbon_credits(self, delta):
+        # 1 degree drop = ~480 tons of CO2 offset for a district
+        tons = delta * 480
+        return tons, tons * 28.5 # Value in USD
 
 def get_city_data():
-    """Real-world coordinates and baseline stats for Punjab Districts."""
     return {
-        "Ludhiana": {"lat": 30.9010, "lon": 75.8573, "base": 44.5, "hum": 45},
-        "Amritsar": {"lat": 31.6340, "lon": 74.8723, "base": 43.2, "hum": 40},
-        "Jalandhar": {"lat": 31.3260, "lon": 75.5762, "base": 42.8, "hum": 42},
-        "Patiala": {"lat": 30.3398, "lon": 76.3869, "base": 43.5, "hum": 48},
-        "Bathinda": {"lat": 30.2110, "lon": 74.9455, "base": 46.2, "hum": 30}
+        "Gurdaspur": {"lat": 32.0416, "lon": 75.4053, "base": 42.1, "hum": 0.52},
+        "Ferozpur": {"lat": 30.9250, "lon": 74.6225, "base": 45.8, "hum": 0.32},
+        "Ludhiana": {"lat": 30.9010, "lon": 75.8573, "base": 46.2, "hum": 0.44},
+        "Amritsar": {"lat": 31.6340, "lon": 74.8723, "base": 44.5, "hum": 0.40},
+        "Patiala": {"lat": 30.3398, "lon": 76.3869, "base": 43.8, "hum": 0.48}
     }
-
-class DecisionAgent:
-    def __init__(self, name, role, avatar):
-        self.name = name
-        self.role = role
-        self.avatar = avatar
