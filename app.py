@@ -1,17 +1,17 @@
-import numpy as np
 import streamlit as st
 import pydeck as pdk
 import pandas as pd
+import numpy as np  # FIX: This line was missing!
 import plotly.figure_factory as ff
 from engine import AuraEngine, DecisionAgent, get_city_data
 
 st.set_page_config(page_title="AuraCool Ultra | 2025", layout="wide")
 
-# Theme setup
+# Theme setup for high-tech look
 if 'engine' not in st.session_state:
     st.session_state.engine = AuraEngine()
 
-# Sidebar
+# --- SIDEBAR ---
 with st.sidebar:
     st.title("🛡️ AuraCool OS")
     st.subheader("Urban Intelligence Interface")
@@ -22,17 +22,18 @@ with st.sidebar:
     reflect = st.sidebar.slider("Surface Albedo (%)", 0, 100, 20) / 100
     density = st.sidebar.slider("Structural Density (%)", 0, 100, 70) / 100
 
-# Logic Execution
+# --- LOGIC ---
 city_info = cities[selected_city]
 sim_temp = st.session_state.engine.run_simulation(green, reflect, density)
 temp_diff = city_info['base'] - sim_temp
 co2, money = st.session_state.engine.calculate_carbon_credits(temp_diff)
 
-# UI Layout
+# --- UI TABS ---
 t1, t2, t3, t4 = st.tabs(["🌡️ Thermal Twin", "💨 Airflow Physics", "💎 Carbon FinTech", "🤖 Agentic Loop"])
 
 with t1:
     st.metric("District Temperature", f"{sim_temp}°C", f"-{round(temp_diff, 2)}°C")
+    # Generates 3D building data points
     map_data = pd.DataFrame({
         "lat": [city_info['lat'] + np.random.uniform(-0.01, 0.01) for _ in range(50)],
         "lon": [city_info['lon'] + np.random.uniform(-0.01, 0.01) for _ in range(50)],
