@@ -1,16 +1,16 @@
-# AuraCool_Pro
-PROJECT CATEGORY
-# AuraCool Ultra: AI-Agentic Urban Cooling & FinTech OS
+# AuraCool Punjab: AI Urban Heat Command Center
 
-### 🏆 2025 Hackathon Submission
-AuraCool Ultra is a **Next-Gen Digital Twin** that solves the Urban Heat Island (UHI) crisis. Unlike static models, AuraCool uses **ExtraTrees Regression** to predict micro-climates and a **Multi-Agent Orchestrator** to calculate the economic ROI of sustainability.
+### 🏆 Hackathon 2025 Submission
+AuraCool Punjab is an **Agentic OS** built to mitigate the extreme heatwave crisis in India. Focusing on the Punjab grid (Patiala, Gurdaspur, Ferozpur), it uses **ExtraTrees Regression** to simulate urban thermal physics and **Fluid Dynamics** to model wind vectors.
 
-### 🌟 Key Innovations
-1. **Agentic Consensus:** Three AI agents (FinTech, Physics, and Environment) deliberate on urban policy.
-2. **Physics-Based Simulation:** Real-time visualization of airflow vectors (Urban Canyon Effect).
-3. **ESG Monetization:** Automatically converts cooling data into verified Carbon Credits.
+### 🌟 Key Features
+- **Thermal Digital Twin:** 3D Geospatial mapping of heat islands.
+- **AI Health Predictor:** Real-time risk assessment for heat-related emergencies.
+- **Multi-Agent Deliberation:** Autonomous agents (Sher & Quartz) decide on policy ROI.
+- **Midnight-OLED UI:** Professional dark-themed dashboard for high-stakes command centers.
 
 ### 🛠️ Tech Stack
-- **AI/ML:** Scikit-Learn, Random Forest/ExtraTrees
-- **Visuals:** Pydeck (3D Map), Plotly (Vector Physics)
-- **Deployment:** Streamlit Cloud
+- Python (ML Core)
+- Streamlit (Interface)
+- Pydeck & Plotly (Advanced Visuals)
+- Scikit-Learn (Predictive Modeling)
