@@ -2,88 +2,84 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-from engine import AuraEngine
+import time
+from engine import SovereignEngine, get_sector_data
 
-st.set_page_config(page_title="AURAMASTER ELITE | Sovereign OS", layout="wide")
+st.set_page_config(page_title="AURAMASTER SOVEREIGN", layout="wide")
 
-# High-Density Engineering UI
+# High-Tech Industrial UI
 st.markdown("""
     <style>
-    .stApp { background-color: #f0f2f6; }
-    .status-panel { background: #ffffff; padding: 20px; border-radius: 5px; border-top: 4px solid #d32f2f; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .ai-logic-box { background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 5px; font-family: monospace; }
+    .stApp { background-color: #f4f7f6; color: #1c1c1c; }
+    .status-card { background: white; padding: 20px; border-radius: 10px; border-left: 8px solid #0056b3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .protocol-active { background: #e8f5e9; border: 1px solid #2e7d32; padding: 10px; border-radius: 5px; color: #2e7d32; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
 if 'engine' not in st.session_state:
-    st.session_state.engine = AuraEngine()
+    st.session_state.engine = SovereignEngine()
 
-# --- STATE DATA ---
-cities = {
-    "Ludhiana": {"lat": 30.9010, "lon": 75.8573, "base": 47.1, "hum": 0.44, "density": 85},
-    "Amritsar": {"lat": 31.6340, "lon": 74.8723, "base": 44.8, "hum": 0.40, "density": 65},
-    "Ferozpur": {"lat": 30.9250, "lon": 74.6225, "base": 46.2, "hum": 0.35, "density": 40}
-}
+sectors = get_sector_data()
 
-st.title("🛡️ AURAMASTER: District Sovereign Control")
+# --- TOP NAVIGATION ---
+st.title("🛡️ SOVEREIGN CLIMATE OS: PUNJAB SECTOR")
+st.markdown("---")
 
-# --- AI OPTIMIZER INTERFACE ---
-col_sidebar, col_main = st.columns([1, 3])
+# --- CONTROL PANEL ---
+col_ctrl, col_map = st.columns([1, 2])
 
-with col_sidebar:
-    st.markdown('<div class="status-panel">', unsafe_allow_html=True)
-    st.header("🎯 AI Optimizer")
-    target = st.number_input("Target Temperature (°C)", 25.0, 35.0, 30.0)
-    city_name = st.selectbox("Strategic Sector", list(cities.keys()))
+with col_ctrl:
+    st.subheader("Target Optimization")
+    selected_name = st.selectbox("Sector Focus", list(sectors.keys()))
+    target_temp = st.slider("Target Stabilization (°C)", 28, 35, 31)
     
-    city = cities[city_name]
-    # RUN AI OPTIMIZATION
-    rec_green, rec_albedo, est_cost = st.session_state.engine.optimize_infrastructure(target, city['base'])
-    
-    st.markdown("### AI Recommendation")
-    st.write(f"**Greenery:** +{int(rec_green*100)}%")
-    st.write(f"**Albedo:** +{int(rec_albedo*100)}%")
-    st.write(f"**CAPEX:** ₹{round(est_cost/100000, 2)} Lacs")
-    st.markdown('</div>', unsafe_allow_html=True)
+    sector = sectors[selected_name]
+    alb, grn, cost = st.session_state.engine.optimize_intervention(sector['temp'], target_temp, sector['area'])
+    v2g_mwh = st.session_state.engine.calculate_v2g_capacity(sector['evs'])
+    water, co2 = st.session_state.engine.calculate_resource_nexus(sector['temp'] - target_temp, sector['area'])
 
-with col_main:
-    # --- METRIC GRID ---
-    m1, m2, m3 = st.columns(3)
-    final_temp = st.session_state.engine.run_simulation(rec_green, rec_albedo, city['hum'], city['base'])
-    delta = city['base'] - final_temp
-    mwh, rev = st.session_state.engine.calculate_v2g_revenue(delta)
-    water = st.session_state.engine.calculate_water_recovery(delta)
-    
-    m1.metric("Thermal Mitigation", f"-{round(delta, 1)}°C")
-    m2.metric("Grid Relief (V2G)", f"{round(mwh, 1)} MWh")
-    m3.metric("Water Saved", f"{round(water, 1)} Million L")
+    st.markdown(f"""
+    <div class="status-card">
+        <h4>AI DEPLOYMENT PLAN</h4>
+        <p><b>Albedo Coating:</b> +{int(alb*100)}% Coverage</p>
+        <p><b>Green Infrastructure:</b> +{int(grn*100)}% Density</p>
+        <hr>
+        <p><b>Est. Investment:</b> ₹{round(cost/10000000, 2)} Cr</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # --- THE "KILLER" FEATURE: CFD WIND CORRIDORS ---
-    st.subheader("🌬️ Fluid Dynamics & Urban Ventilation Mapping")
-    vent_factor = st.session_state.engine.calculate_cfd_ventilation(city['density'])
-    st.write(f"Current Ventilation Coefficient: **{vent_factor}** (Values < 0.3 indicate Critical Heat Stagnation)")
-    
-    # 3D Wind Vector Simulation
-    view = pdk.ViewState(latitude=city['lat'], longitude=city['lon'], zoom=14, pitch=50)
+with col_map:
+    st.subheader("Thermal Anomaly Detection")
+    # 3D Mapping of the heat island
+    view = pdk.ViewState(latitude=sector['lat'], longitude=sector['lon'], zoom=12, pitch=45)
     map_data = pd.DataFrame({
-        "lat": [city['lat'] + np.random.normal(0, 0.005) for _ in range(100)],
-        "lon": [city['lon'] + np.random.normal(0, 0.005) for _ in range(100)],
-        "height": [np.random.randint(50, 400) for _ in range(100)],
-        "v_vector": [np.random.rand() * vent_factor for _ in range(100)]
+        "lat": [sector['lat'] + np.random.normal(0, 0.01) for _ in range(100)],
+        "lon": [sector['lon'] + np.random.normal(0, 0.01) for _ in range(100)],
+        "heat": [np.random.randint(100, 500) for _ in range(100)]
     })
-    
-    layer = pdk.Layer(
-        "ColumnLayer", data=map_data, get_position="[lon, lat]", 
-        get_elevation="height", radius=40, 
-        get_fill_color="[255, (1 - v_vector) * 255, 0, 150]"
-    )
+    layer = pdk.Layer("ColumnLayer", data=map_data, get_position="[lon, lat]", get_elevation="heat", radius=100, get_fill_color="[255, 100, 0, 160]")
     st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view))
 
-# --- BOTTOM LOGIC TABS ---
+# --- IMPACT ARBITRAGE TABS ---
 st.divider()
-t1, t2 = st.tabs(["🧬 Genetic Logic", "⚡ V2G Arbitrage"])
+t1, t2, t3 = st.tabs(["⚡ V2G GRID ARBITRAGE", "💧 HYDRO-THERMAL NEXUS", "💰 CARBON ROI"])
+
 with t1:
-    st.markdown('<div class="ai-logic-box">', unsafe_allow_html=True)
-    st.text(f"GENETIC OPTIMIZER LOG:\nIteration 104: Converged.\nDelta Target: {delta}C\nMinimizing CAPEX for {city_name}...")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.subheader("Virtual Power Plant Synchronization")
+    st.metric("V2G Emergency Buffer", f"{v2g_mwh} MWh", help="Energy available from local EVs to prevent brownouts.")
+    st.write("This buffer can stabilize the local grid for 4 hours during peak heat without using thermal coal plants.")
+
+with t2:
+    st.subheader("Agricultural Water Preservation")
+    st.info(f"By cooling the urban sector, we save **{water} Million Liters** of water from evaporative loss.")
+    st.write("This directly recharges the local water table, providing relief to the surrounding agricultural belt.")
+
+with t3:
+    st.subheader("Financial Performance")
+    col_a, col_b = st.columns(2)
+    col_a.metric("Carbon Credits (Annual)", f"₹{round(co2 * 2.4, 1)} L")
+    col_b.metric("Grid Procurement Savings", f"₹{round(v2g_mwh * 0.8, 1)} L")
+
+if st.button("🔴 INITIATE SOVEREIGN DEFENSE PROTOCOL"):
+    st.markdown('<div class="protocol-active">PROTOCOL ENGAGED: Automating cooling dispatch systems...</div>', unsafe_allow_html=True)
+    st.snow()
