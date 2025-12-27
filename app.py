@@ -2,14 +2,12 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 import time
 from engine import AuraEngine
 
-# --- APP CONFIGURATION ---
 st.set_page_config(page_title="AURAMASTER | Punjab State Command", layout="wide")
 
-# Gov-Tech High Visibility Theme
+# Gov-Tech Theme
 st.markdown("""
     <style>
     .stApp { background-color: #ffffff; color: #1a1a1a; }
@@ -20,15 +18,6 @@ st.markdown("""
     }
     .stMetric { background-color: #f1f3f5; border: 1px solid #dee2e6; padding: 15px; border-radius: 10px; }
     </style>
-    """, unsafe_allow_html=True)
-
-# --- LIVE INTELLIGENCE TICKER ---
-st.markdown(f"""
-    <div class="news-ticker">
-        🌍 STATE COMMAND: Monitoring 5 Strategic Districts | 
-        🛰️ SATELLITE: Punjab Thermal Grid Synchronized | 
-        ⚡ V2G: Virtual Power Plant Capacity at 84%
-    </div>
     """, unsafe_allow_html=True)
 
 if 'engine' not in st.session_state:
@@ -43,110 +32,78 @@ def get_state_data():
         "Patiala": {"lat": 30.3398, "lon": 76.3869, "base": 43.5, "hum": 0.48}
     }
 
-# --- SIDEBAR CONTROL ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("⚙️ State-Level Parameters")
+    st.header("⚙️ State Control")
     cities = get_state_data()
-    st.write("Adjusting these sliders simulates a state-wide infrastructure rollout.")
-    green = st.slider("Urban Canopy expansion (%)", 0.0, 1.0, 0.35)
-    albedo = st.slider("Cool Surface Coating (%)", 0.0, 1.0, 0.25)
+    green = st.slider("Urban Canopy (%)", 0.0, 1.0, 0.35)
+    albedo = st.slider("Albedo Coating (%)", 0.0, 1.0, 0.25)
     aqi = st.slider("Atmospheric AQI", 50, 500, 160)
-    
-    st.divider()
-    selected_focus = st.selectbox("Detailed Sector Analysis", list(cities.keys()))
+    selected_focus = st.selectbox("Deep Sector Audit", list(cities.keys()))
 
-# --- STATE-WIDE DATA PROCESSING ---
+# --- DATA AGGREGATION ---
 state_list = []
-total_revenue = 0
-total_mwh = 0
+total_rev, total_mwh, total_water = 0, 0, 0
 
 for name, data in cities.items():
-    # Calculate optimized metrics for each city
     opt_temp = st.session_state.engine.run_simulation(green, albedo, data['hum'], data['base'])
     delta = data['base'] - opt_temp
-    mwh, revenue_cr = st.session_state.engine.calculate_v2g_revenue(delta)
+    mwh, rev = st.session_state.engine.calculate_v2g_revenue(delta)
+    water = st.session_state.engine.calculate_water_recovery(delta)
     
-    total_revenue += revenue_cr
+    total_rev += rev
     total_mwh += mwh
-    
-    # Prepare data for the 3D Map
-    state_list.append({
-        "name": name,
-        "lat": data['lat'],
-        "lon": data['lon'],
-        "temp": opt_temp,
-        "delta": delta,
-        "height": opt_temp * 500, # Height represents heat intensity
-        "color": [255, int(255 - (delta * 20)), 0, 200] # Redder = Hotter
-    })
+    total_water += water
+    state_list.append({"name": name, "lat": data['lat'], "lon": data['lon'], "temp": opt_temp, "delta": delta, "height": opt_temp * 500})
 
 df = pd.DataFrame(state_list)
-focus_city = df[df['name'] == selected_focus].iloc[0]
 
-# --- MAIN DASHBOARD ---
-st.title("Punjab State Thermal Defense Command")
+# --- HEADER ---
+st.markdown('<div class="news-ticker">🌍 STATE COMMAND: Virtual Power Plant Synced | 💧 WATER ADVISORY: Evaporation delta tracking active</div>', unsafe_allow_html=True)
+st.title("Punjab Climate Defense & Resource Command")
 
-# State-Wide Metrics
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("State Avg. Temp", f"{round(df['temp'].mean(), 1)}°C")
-c2.metric("Total Grid Relief", f"{round(total_mwh, 1)} MWh")
-c3.metric("State ROI", f"₹{round(total_revenue, 2)} Cr")
-c4.metric("Active Sectors", len(cities))
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("State Avg. Temp", f"{round(df['temp'].mean(), 1)}°C")
+m2.metric("Total Water Saved", f"{round(total_water, 2)} Million L")
+m3.metric("State ROI", f"₹{round(total_rev, 2)} Cr")
+m4.metric("Grid Relief", f"{round(total_mwh, 1)} MWh")
 
 st.divider()
 
-# --- 3D STATE MAP ---
-st.subheader("State-Wide 3D Thermal Digital Twin")
-st.write("Visualizing all strategic sectors. Pillar height represents heat intensity; color shift indicates cooling efficacy.")
+# --- THE WINNING TABS ---
+tab1, tab2, tab3, tab4 = st.tabs(["🗺️ State Twin", "💧 Water-Energy Nexus", "🛰️ Sentinel Audit", "📜 Policy Brief"])
 
-view = pdk.ViewState(latitude=31.0, longitude=75.4, zoom=6.8, pitch=45)
+with tab1:
+    st.subheader("3D State-Wide Thermal View")
+    view = pdk.ViewState(latitude=31.2, longitude=75.4, zoom=6.5, pitch=45)
+    layer = pdk.Layer("ColumnLayer", data=df, get_position="[lon, lat]", get_elevation="height", radius=7000, get_fill_color="[0, 100, 255, 180]")
+    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view, tooltip={"text": "{name}: {temp}°C"}))
 
-layer = pdk.Layer(
-    "ColumnLayer",
-    data=df,
-    get_position="[lon, lat]",
-    get_elevation="height",
-    radius=8000,
-    get_fill_color="color",
-    pickable=True,
-    auto_highlight=True,
-)
-
-st.pydeck_chart(pdk.Deck(
-    layers=[layer],
-    initial_view_state=view,
-    tooltip={"text": "{name}\nCurrent Temp: {temp}°C\nReduction: -{delta}°C"}
-))
-
-# --- DETAIL TABS ---
-t1, t2 = st.tabs(["📊 Sector Breakdown", "📜 Policy Manifest"])
-
-with t1:
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.write(f"### Economic Impact: {selected_focus}")
-        st.bar_chart(df.set_index('name')[['temp', 'delta']])
-    with col_b:
-        st.write("### Grid Energy Arbitrage")
-        st.line_chart(np.random.randn(10, 2)) # Simulated grid stability
-
-with t2:
-    brief = f"""
-    STATE POLICY DECREE - PUNJAB CLIMATE UNIT
-    -------------------------------------------
-    SECTOR: {selected_focus.upper()}
-    ESTIMATED REVENUE: ₹{round(total_revenue/len(cities), 2)} Cr
+with tab2:
+    st.subheader("💧 Resource Recovery: Solving Water Scarcity")
+    st.write(f"Thermal reduction in **{selected_focus}** directly prevents groundwater depletion.")
     
-    ACTION PLAN:
-    - Deploy Albedo-Force coatings state-wide.
-    - Synchronize V2G battery discharge across NH-44 corridor.
-    """
-    st.text_area("State Mandate", brief, height=150)
-    st.download_button("📥 Export Punjab State Policy", brief, file_name="Punjab_State_Policy.txt")
+    st.info(f"AI Estimate: **{round(total_water / 5, 2)} Million Liters** of water recovered in this sector through reduced evaporative demand.")
+    st.bar_chart(df.set_index('name')['delta'])
 
-# --- EXECUTION ---
-if st.button("🚀 EXECUTE STATE-WIDE SOVEREIGN PROTOCOL"):
-    with st.spinner("Synchronizing Punjab State Grid..."):
-        time.sleep(2)
-        st.balloons()
-        st.success("Sovereign Protocol Active. Punjab State is now in Autonomous Cooling Mode.")
+with tab3:
+    st.subheader("🛰️ Sentinel Intelligence: Automated Auditing")
+    st.write("Using simulated Sentinel-3 Thermal Infrared data to detect policy violations.")
+    # Show "Hot Spots" - areas where Albedo is low despite mandates
+    anomalies = pd.DataFrame({"Zone": ["Industrial Area A", "Sector 12", "Truck Terminal"], "Heat Index": [48.2, 45.6, 49.1], "Compliance": ["❌ VIOLATION", "✅ OK", "⚠️ WARNING"]})
+    st.table(anomalies)
+    
+
+with tab4:
+    st.subheader("State Strategic Mandate")
+    
+
+[Image of hydrogen fuel cell]
+
+    brief = f"STATE DECREE: {selected_focus.upper()}\n- Target Mitigation: -{round(df[df['name']==selected_focus]['delta'].values[0], 1)}C\n- V2G Requirement: 15% EV Discharge\n- Status: READY"
+    st.text_area("Official Script", brief, height=150)
+    st.download_button("Export Brief", brief)
+
+if st.button("🚀 EXECUTE STATE PROTOCOL"):
+    st.balloons()
+    st.success("State-Wide Sovereign Protocol Engaged.")
