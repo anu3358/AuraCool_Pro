@@ -7,7 +7,7 @@ import time
 from io import BytesIO
 from engine import AuraEngine, get_city_data 
 
-# --- UI CONFIGURATION & CYBERPUNK THEME ---
+# --- UI CONFIGURATION ---
 st.set_page_config(page_title="AURAMASTER | Sovereign Urban OS", layout="wide")
 
 st.markdown("""
@@ -96,7 +96,7 @@ with tabs[1]:
     st.error(f"**Aerosol Forcing:** PM2.5 levels are trapping {round(aerosol_heat, 2)}°C of heat.")
     fig = go.Figure(go.Indicator(
         mode = "gauge+number", value = final_temp,
-        title = {'text': "District Wet Bulb Temperature"},
+        title = {'text': "District Wet Bulb Temperature (°C)"},
         gauge = {'axis': {'range': [20, 50]}, 'bar': {'color': "#1f6feb"}}
     ))
     st.plotly_chart(fig, use_container_width=True)
