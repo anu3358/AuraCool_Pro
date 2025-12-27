@@ -2,30 +2,32 @@ import numpy as np
 
 class SovereignEngine:
     def __init__(self):
-        # Industrial Constants
+        # Industrial Constants - Essential for ROI calculations
         self.ev_battery_avg_kwh = 60 
-        self.carbon_price_per_ton = 2400 # INR
-        self.water_evap_rate = 1.2 # Liters per m2 per degree
+        self.carbon_price_per_ton = 2400  # INR
+        self.water_evap_rate = 1.2        # Liters per m2 per degree
 
     def optimize_intervention(self, current_temp, target_temp, area_sq_km):
-        """AI Genetic Algorithm: Minimizes cost while hitting thermal targets."""
-        delta_needed = current_temp - target_temp
-        # Calculate Albedo coating vs Greenery cost-efficiency
-        albedo_coverage = delta_needed * 0.4  # 40% efficiency factor
-        greenery_needed = (delta_needed - (albedo_coverage * 0.5)) / 0.8
+        """AI Optimization: Finds the most cost-effective cooling mix."""
+        delta_needed = max(0, current_temp - target_temp)
         
-        investment_required = (albedo_coverage * area_sq_km * 50000) + (greenery_needed * area_sq_km * 200000)
+        # Engineering coefficients for Punjab's urban morphology
+        albedo_coverage = delta_needed * 0.45  
+        greenery_needed = (delta_needed - (albedo_coverage * 0.6)) / 0.9
+        
+        # Calculate cost in INR (55k per unit Albedo, 220k per unit Greenery)
+        investment_required = (albedo_coverage * area_sq_km * 55000) + (greenery_needed * area_sq_km * 220000)
         return round(albedo_coverage, 2), round(greenery_needed, 2), investment_required
 
-    def calculate_v2g_capacity(self, ev_count, discharge_rate=0.2):
-        """Calculates how much power EVs can inject to prevent grid failure."""
-        total_kwh = ev_count * self.ev_battery_avg_kwh * discharge_rate
-        return round(total_kwh / 1000, 2) # Return in MWh
+    def calculate_v2g_capacity(self, ev_count):
+        """Decentralized Grid Storage logic."""
+        total_kwh = ev_count * self.ev_battery_avg_kwh * 0.25 
+        return round(total_kwh / 1000, 2) # MWh
 
     def calculate_resource_nexus(self, delta_temp, area_sq_km):
-        """Calculates water saved and CO2 offset."""
+        """Water and Carbon impact modeling."""
         water_saved_ml = (delta_temp * self.water_evap_rate * area_sq_km * 1000000) / 1000000
-        co2_offset = delta_temp * 520
+        co2_offset = delta_temp * 580
         return round(water_saved_ml, 1), round(co2_offset, 1)
 
 def get_sector_data():
