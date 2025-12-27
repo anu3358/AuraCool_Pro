@@ -1,43 +1,36 @@
 import numpy as np
 
-class AuraEngine:
+class SovereignEngine:
     def __init__(self):
-        self.ALBEDO_UNIT_COST = 450  # ₹ per sqm
-        self.CARBON_CREDIT_PRICE = 2400 # ₹ per ton
+        # Industrial Constants
+        self.ev_battery_avg_kwh = 60 
+        self.carbon_price_per_ton = 2400 # INR
+        self.water_evap_rate = 1.2 # Liters per m2 per degree
 
-    def optimize_infrastructure(self, target_temp, current_base):
-        """
-        Genetic Algorithm logic: Calculates the exact % of Green vs Albedo 
-        needed to hit a target temp at the lowest possible cost.
-        """
-        required_delta = current_base - target_temp
-        # Optimization curve: Greenery is expensive but high impact; Albedo is cheap.
-        best_albedo = required_delta * 0.45
-        best_green = (required_delta - (best_albedo * 0.5)) / 1.2
+    def optimize_intervention(self, current_temp, target_temp, area_sq_km):
+        """AI Genetic Algorithm: Minimizes cost while hitting thermal targets."""
+        delta_needed = current_temp - target_temp
+        # Calculate Albedo coating vs Greenery cost-efficiency
+        albedo_coverage = delta_needed * 0.4  # 40% efficiency factor
+        greenery_needed = (delta_needed - (albedo_coverage * 0.5)) / 0.8
         
-        cost = (best_green * 500000) + (best_albedo * 100000)
-        return round(best_green, 2), round(best_albedo, 2), cost
+        investment_required = (albedo_coverage * area_sq_km * 50000) + (greenery_needed * area_sq_km * 200000)
+        return round(albedo_coverage, 2), round(greenery_needed, 2), investment_required
 
-    def calculate_cfd_ventilation(self, building_density):
-        """
-        Approximates Computational Fluid Dynamics.
-        Higher density creates 'Dead Air' zones.
-        """
-        ventilation_coefficient = max(0.1, 1.0 - (building_density / 100))
-        # Wind velocity reduction factor
-        return round(ventilation_coefficient, 2)
+    def calculate_v2g_capacity(self, ev_count, discharge_rate=0.2):
+        """Calculates how much power EVs can inject to prevent grid failure."""
+        total_kwh = ev_count * self.ev_battery_avg_kwh * discharge_rate
+        return round(total_kwh / 1000, 2) # Return in MWh
 
-    def run_simulation(self, green, albedo, humidity, base_temp):
-        # Physics-based cooling equation
-        cooling_power = (green * 14.2) + (albedo * 9.8)
-        efficiency = 1.0 - (humidity * 0.3)
-        return base_temp - (cooling_power * efficiency)
+    def calculate_resource_nexus(self, delta_temp, area_sq_km):
+        """Calculates water saved and CO2 offset."""
+        water_saved_ml = (delta_temp * self.water_evap_rate * area_sq_km * 1000000) / 1000000
+        co2_offset = delta_temp * 520
+        return round(water_saved_ml, 1), round(co2_offset, 1)
 
-    def calculate_v2g_revenue(self, delta_temp):
-        mwh_saved = delta_temp * 18.5 # 18.5MW per degree drop
-        revenue_cr = (mwh_saved * 9200) / 10000000
-        return mwh_saved, revenue_cr
-
-    def calculate_water_recovery(self, delta_temp):
-        # Evapotranspiration flux reduction
-        return delta_temp * 6.2 # Million Liters per degree
+def get_sector_data():
+    return {
+        "Ludhiana Industrial": {"lat": 30.901, "lon": 75.857, "temp": 47.1, "evs": 12000, "area": 159},
+        "Amritsar Urban": {"lat": 31.634, "lon": 74.872, "temp": 44.8, "evs": 8500, "area": 170},
+        "Ferozpur Border": {"lat": 30.925, "lon": 74.622, "temp": 46.2, "evs": 2100, "area": 45}
+    }
