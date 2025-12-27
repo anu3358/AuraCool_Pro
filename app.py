@@ -1,20 +1,23 @@
 import streamlit as st
 import pydeck as pdk
 import pandas as pd
-import numpy as np  # FIX: This line was missing!
+import numpy as np  # Explicitly defined
 import plotly.figure_factory as ff
 from engine import AuraEngine, DecisionAgent, get_city_data
 
+# Force-check numpy availability
+if 'np' not in globals():
+    import numpy as np
+
 st.set_page_config(page_title="AuraCool Ultra | 2025", layout="wide")
 
-# Theme setup for high-tech look
+# Initialization
 if 'engine' not in st.session_state:
     st.session_state.engine = AuraEngine()
 
 # --- SIDEBAR ---
 with st.sidebar:
     st.title("🛡️ AuraCool OS")
-    st.subheader("Urban Intelligence Interface")
     cities = get_city_data()
     selected_city = st.selectbox("Select Target Grid", list(cities.keys()))
     st.divider()
@@ -33,12 +36,17 @@ t1, t2, t3, t4 = st.tabs(["🌡️ Thermal Twin", "💨 Airflow Physics", "💎 
 
 with t1:
     st.metric("District Temperature", f"{sim_temp}°C", f"-{round(temp_diff, 2)}°C")
-    # Generates 3D building data points
+    
+    # Using np directly here
+    map_lat = [city_info['lat'] + np.random.uniform(-0.01, 0.01) for _ in range(50)]
+    map_lon = [city_info['lon'] + np.random.uniform(-0.01, 0.01) for _ in range(50)]
+    
     map_data = pd.DataFrame({
-        "lat": [city_info['lat'] + np.random.uniform(-0.01, 0.01) for _ in range(50)],
-        "lon": [city_info['lon'] + np.random.uniform(-0.01, 0.01) for _ in range(50)],
+        "lat": map_lat,
+        "lon": map_lon,
         "heat": [np.random.randint(30, 50) for _ in range(50)]
     })
+    
     st.pydeck_chart(pdk.Deck(
         initial_view_state=pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=13, pitch=45),
         layers=[pdk.Layer('HexagonLayer', data=map_data, get_position='[lon, lat]', radius=150, elevation_scale=50, extruded=True)]
@@ -55,7 +63,6 @@ with t3:
     c1, c2 = st.columns(2)
     c1.metric("CO2 Offset (Tons)", f"{co2:,}")
     c2.metric("Market Credit Value", f"${money:,}")
-    st.write("**Blockchain Verification Status:** ✅ Validated for Green Bond Issuance")
 
 with t4:
     agents = [
@@ -68,6 +75,5 @@ with t4:
             st.write(f"**{a.name} ({a.role} Agent)**")
             st.write(a.analyze(temp_diff, money))
 
-if st.button("🚀 Finalize Project & Deploy Strategy"):
+if st.button("🚀 Finalize Project"):
     st.snow()
-    st.success("Urban Strategy Optimized and Verified.")
