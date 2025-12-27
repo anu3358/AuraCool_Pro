@@ -9,168 +9,127 @@ from engine import AuraEngine, DecisionAgent, get_city_data
 # --- UI CONFIGURATION ---
 st.set_page_config(page_title="AuraCool OS | Punjab 2025", layout="wide")
 
-# CLEAN LIGHT THEME: Arctic White & Midnight Blue
+# CLEAN LIGHT THEME: Professional Command Center
 st.markdown("""
     <style>
-    /* Main Background - Clean Off-White */
-    .stApp { 
-        background-color: #f8f9fa; 
-        color: #1a1c23; 
-    }
-    
-    /* Metrics Styling - Deep Teal for professional look */
-    [data-testid="stMetricValue"] { 
-        color: #00796b !important; 
-        font-size: 38px !important; 
-        font-weight: 800 !important; 
-    }
-    
-    /* Metric Label - Darker Gray */
-    [data-testid="stMetricLabel"] {
-        color: #455a64 !important;
-    }
-    
-    /* Sidebar - Crisp White with subtle shadow */
-    .stSidebar { 
-        background-color: #ffffff; 
-        border-right: 1px solid #dee2e6; 
-    }
-    
-    /* Metric Cards - White boxes with professional shadow */
+    .stApp { background-color: #fcfcfc; color: #1a1c23; }
+    [data-testid="stMetricValue"] { color: #1a237e !important; font-size: 40px !important; font-weight: 850 !important; }
+    .stSidebar { background-color: #ffffff; border-right: 1px solid #dee2e6; }
     .main-stats { 
-        background-color: #ffffff; 
-        padding: 25px; 
-        border-radius: 12px; 
-        border: 1px solid #e0e0e0; 
-        margin-bottom: 25px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
+        background-color: #ffffff; padding: 25px; border-radius: 15px; 
+        border: 1px solid #e0e0e0; margin-bottom: 25px;
+        box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
     }
-    
-    /* Headers - Professional Midnight Blue */
-    h1, h2, h3 { 
-        color: #1a237e; 
-        font-family: 'Helvetica Neue', sans-serif; 
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Tab Styling */
-    .stTabs [data-baseweb="tab-list"] { background-color: transparent; }
-    .stTabs [data-baseweb="tab"] { color: #607d8b; font-size: 18px; }
-    .stTabs [aria-selected="true"] { color: #1a237e !important; border-bottom: 3px solid #1a237e; }
-    
-    /* Slider & Button Styling */
-    .stButton>button {
-        background-color: #1a237e;
-        color: white;
-        border-radius: 8px;
-    }
+    h1, h2, h3 { color: #1a237e; font-family: 'Helvetica', sans-serif; letter-spacing: -0.5px; }
+    .stButton>button { width: 100%; height: 50px; font-weight: bold; background-color: #1a237e; color: white; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 if 'engine' not in st.session_state:
     st.session_state.engine = AuraEngine()
 
-# --- SIDEBAR CONTROLS ---
+# --- SIDEBAR: MISSION CONTROL ---
 with st.sidebar:
-    st.title("🏙️ AuraCool OS")
-    st.markdown("---")
+    st.title("🛡️ AuraCool OS")
+    st.info("Unified Thermal Defense Grid: Punjab 2025")
     cities = get_city_data()
-    selected_city = st.selectbox("📍 Target District", list(cities.keys()))
+    selected_city = st.selectbox("📍 District Command", list(cities.keys()))
     
     st.divider()
-    st.subheader("Simulate Interventions")
-    green = st.slider("Tree Canopy Expansion (%)", 0, 100, 25) / 100
-    refl = st.slider("Reflective Infrastructure (%)", 0, 100, 15) / 100
+    st.subheader("🛠️ Strategic Deployment")
+    green = st.slider("Urban Forestry Cover", 0.0, 1.0, 0.35)
+    refl = st.slider("Albedo/Cool Surface Coverage", 0.0, 1.0, 0.25)
     
-    st.subheader("Map Visualization")
-    map_mode = st.radio("View Mode", ["Current Heatmap", "AI Optimized View"])
+    st.subheader("🛰️ Analysis Layers")
+    vulnerability = st.checkbox("Show Vulnerability Index", value=True)
+    show_agri_bridge = st.checkbox("Show Crop Stress Zones", value=True)
 
 # --- AI DATA PROCESSING ---
 city_info = cities[selected_city]
 optimized_temp = st.session_state.engine.run_simulation(green, refl, 0.7, city_info['hum']/100)
-display_temp = optimized_temp if map_mode == "AI Optimized View" else city_info['base']
 temp_diff = city_info['base'] - optimized_temp
-msg, risk_lvl = st.session_state.engine.predict_health_risk(display_temp, city_info['hum'])
+msg, risk_lvl = st.session_state.engine.predict_health_risk(optimized_temp, city_info['hum'])
 co2, money = st.session_state.engine.calculate_carbon_credits(temp_diff)
 
-# --- MAIN INTERFACE ---
-st.title(f"District Health & Thermal Scan: {selected_city}")
+# --- MAIN DASHBOARD ---
+st.title(f"AuraCool Command Center: {selected_city}")
 
-# Top Metric Cards (High Visibility Container)
+# Top Metrics: The Multi-Problem Solver
 st.markdown('<div class="main-stats">', unsafe_allow_html=True)
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Surface Temp", f"{round(display_temp, 1)}°C", f"-{round(temp_diff, 1)}°C" if map_mode == "AI Optimized View" else None)
-c2.metric("Health Risk", risk_lvl)
-c3.metric("Grid Load Reduction", f"{int(temp_diff*3.2)}%", "Power Saved")
-c4.metric("Carbon Yield", f"${int(money)}")
+c1.metric("Current Delta", f"-{round(temp_diff, 2)}°C", "AI Mitigated")
+c2.metric("Critical Risk", risk_lvl)
+c3.metric("Water Saved", f"{int(temp_diff*145)}k L", "Evap Reduction")
+c4.metric("Crop Yield Protection", f"+{round(temp_diff*1.4, 1)}%", "Heat Stress Avoided")
 st.markdown('</div>', unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["🗺️ Geospatial Analysis", "⚡ Power Grid Impact", "🦁 Agent Deliberation"])
+tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Spatial Defense", "🏥 Health Crisis AI", "🌾 Agri-Water Nexus", "📈 Economic ROI"])
 
 with tab1:
-    st.subheader("Live Thermal Surface Scan")
-    points = 400
-    weight_val = 0.4 if map_mode == "AI Optimized View" else 1.2
-    
+    st.subheader("Strategic Infrastructure Placement")
+    points = 800
     map_df = pd.DataFrame({
-        "lat": [city_info['lat'] + np.random.normal(0, 0.006) for _ in range(points)],
-        "lon": [city_info['lon'] + np.random.normal(0, 0.006) for _ in range(points)],
-        "intensity": [np.random.uniform(0.1, 1.0) * weight_val for _ in range(points)]
+        "lat": [city_info['lat'] + np.random.normal(0, 0.01) for _ in range(points)],
+        "lon": [city_info['lon'] + np.random.normal(0, 0.01) for _ in range(points)],
+        "weight": [np.random.uniform(0.1, 1.0) for _ in range(points)]
     })
-
-    view_state = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=13, pitch=0)
     
-    # Heatmap color range: Blue (Cool) to Red (Hot) - Standard High Visibility
-    layer = pdk.Layer(
-        "HeatmapLayer",
-        data=map_df,
-        get_position="[lon, lat]",
-        get_weight="intensity",
-        radius_pixels=50,
-        color_range=[
-            [232, 245, 233, 0],   # Light Green/Transp
-            [129, 212, 250, 150], # Sky Blue
-            [255, 235, 59, 200],  # Yellow
-            [255, 152, 0, 220],   # Orange
-            [211, 47, 47, 255]    # High Red
-        ]
-    )
+    layers = [pdk.Layer("HeatmapLayer", data=map_df, get_position="[lon, lat]", get_weight="weight", radius_pixels=45, color_range=[[232,245,233], [129,212,250], [255,235,59], [255,152,0], [211,47,47]])]
 
-    st.pydeck_chart(pdk.Deck(
-        map_style='mapbox://styles/mapbox/light-v10',
-        initial_view_state=view_state,
-        layers=[layer],
-    ))
+    if vulnerability:
+        # Markers for high risk areas like crowded markets or slums
+        vuln_data = pd.DataFrame({
+            "lat": [city_info['lat'] + 0.004, city_info['lat'] - 0.007],
+            "lon": [city_info['lon'] - 0.002, city_info['lon'] + 0.005],
+            "label": ["High-Density Market", "Slum Settlement"]
+        })
+        layers.append(pdk.Layer("ScatterplotLayer", data=vuln_data, get_position="[lon, lat]", get_radius=200, get_fill_color=[106, 27, 154, 180]))
+
+    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/light-v10', initial_view_state=pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=13), layers=layers))
+    st.caption("Thermal scan of district urban core. Purple circles represent priority zones for mobile cooling units.")
 
 with tab2:
-    st.subheader("Electricity Demand Forecasting")
-    hours = list(range(0, 24))
-    baseline_load = [30 + 20*np.sin((h-6)*np.pi/12) + 10*(city_info['base']/40) for h in hours]
-    optimized_load = [b * (1 - (temp_diff*0.04)) for b in baseline_load]
+    st.subheader("Hospital Admissions & Patient Load Forecasting")
     
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=hours, y=baseline_load, name="Current Grid Demand", line=dict(color='#78909c', width=2, dash='dot')))
-    fig.add_trace(go.Scatter(x=hours, y=optimized_load, name="AI Optimized Demand", line=dict(color='#1a237e', width=4)))
-    
-    fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="#1a1c23",
-        xaxis_title="Hour of Day", yaxis_title="Load (Megawatts)"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    
-    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.warning(f"**Emergency Status:** {msg}")
+        st.info("💡 **Golden Hour Strategy:** Deploying ambulances to mapped vulnerability zones to reduce response time by 15 mins.")
+    with col_b:
+        temps = np.arange(30, 50, 1)
+        load = [(t-30)**2.2 / 10 for t in temps]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=temps, y=load, name="Predicted ER Load", fill='tozeroy', line=dict(color='#d32f2f')))
+        fig.update_layout(title="Emergency Load vs Temperature", xaxis_title="Ambient Temp (°C)", yaxis_title="Daily Admissions")
+        st.plotly_chart(fig, use_container_width=True)
 
 with tab3:
-    st.subheader("AI Governance Strategy")
-    col_l, col_r = st.columns([1, 2])
-    with col_l:
-        st.image("https://cdn-icons-png.flaticon.com/512/3222/3222792.png", width=180)
-    with col_r:
-        st.chat_message("assistant", avatar="🦁").write(f"**Command Center Reporting for {selected_city}:**")
-        st.write(msg)
-        st.info(f"ROI Analysis: Cooling {selected_city} by {round(temp_diff, 1)}°C provides a {round(money/10, 2)}x return on climate investment.")
+    st.subheader("Groundwater & Agriculture Protection")
+    
+    st.markdown(f"""
+    **Urban-to-Agri Leakage Analysis:**
+    High temperatures in **{selected_city}** create a 'heat plume' that dries out the surrounding soil.
+    * **Evaporation Prevention:** {int(temp_diff*145)}k Liters saved today.
+    * **Crop Safety:** Preventing thermal shock in Rice/Wheat belts.
+    """)
+    # Groundwater Stress Chart
+    months = ["Apr", "May", "Jun", "Jul"]
+    water_stress = [70, 85, 95, 80]
+    mitigated_stress = [s - (temp_diff*3) for s in water_stress]
+    fig_agri = go.Figure()
+    fig_agri.add_trace(go.Bar(x=months, y=water_stress, name="Baseline Stress", marker_color='#ef5350'))
+    fig_agri.add_trace(go.Bar(x=months, y=mitigated_stress, name="With AuraCool", marker_color='#66bb6a'))
+    fig_agri.update_layout(title="Groundwater Irrigation Pressure Index", barmode='group')
+    st.plotly_chart(fig_agri, use_container_width=True)
 
-if st.button("🚀 EXECUTE MUNICIPAL DEPLOYMENT"):
+with tab4:
+    st.subheader("Carbon Monetization & ESG")
+    co2_tons, annual_val = st.session_state.engine.calculate_carbon_credits(temp_diff)
+    col1, col2 = st.columns(2)
+    col1.metric("Carbon Credits Earned", f"{int(co2_tons)} Tons")
+    col2.metric("Market Value (INR)", f"₹{int(annual_val*82)} Lakhs")
+    st.success("Analysis: This project qualifies for international green municipal bonds.")
+
+if st.button("🚀 INITIATE PUNJAB THERMAL DEFENSE PROTOCOL"):
     st.snow()
-    st.success("Strategy pushed to Municipal Smart Grid.")
+    st.success(f"Strategy deployed for {selected_city}. Energy, Water, and Health grids synchronized.")
