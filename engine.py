@@ -1,127 +1,77 @@
-import streamlit as st
-import pydeck as pdk
-import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-import time
-from io import BytesIO
-from engine import AuraEngine, get_city_data 
 
-# --- UI CONFIGURATION ---
-st.set_page_config(page_title="AURAMASTER | Sovereign Urban OS", layout="wide")
+class AuraEngine:
+    def __init__(self):
+        # Constants for Punjab's specific climate profile
+        self.stefan_boltzmann = 5.67e-8  # W/(m^2 K^4)
+        self.albedo_max = 0.85          # Premium cool-roof coating
 
-st.markdown("""
-    <style>
-    .stApp { background: #010409; color: #e6edf3; }
-    .ticker-bar {
-        background: #0d1117; padding: 10px; border-bottom: 2px solid #1f6feb;
-        color: #39ff14; font-family: 'Courier New', monospace; font-weight: bold;
-        text-align: center; font-size: 16px;
+    def run_simulation(self, green_cover, albedo_boost, humidity, ambient_temp):
+        """
+        Advanced Heat Mitigation Algorithm using Evapotranspiration 
+        and Radiative Forcing equations.
+        """
+        # 1. Evapotranspirative Cooling (Trees)
+        # 10% increase in green cover reduces surface temp by approx 1.1C in Punjab
+        tree_cooling = green_cover * 11.5 
+        
+        # 2. Radiative Cooling (Albedo)
+        # Reflecting short-wave radiation before it hits the asphalt
+        albedo_cooling = albedo_boost * 9.2
+        
+        # 3. Humidity Penalty (Wet Bulb Efficiency)
+        # Evaporative cooling is less effective in high humidity
+        efficiency_factor = 1.0 - (humidity * 0.28)
+        
+        mitigated_temp = ambient_temp - ((tree_cooling + albedo_cooling) * efficiency_factor)
+        
+        # Ensure we don't go below dew point arbitrarily
+        return max(mitigated_temp, 21.5)
+
+    def calculate_svf_impact(self, building_density):
+        """
+        Sky View Factor (SVF) Physics.
+        Measures the ratio of the sky visible from a street-level point.
+        """
+        # SVF = 1 (Open Field), SVF = 0.1 (Dense Urban Canyon)
+        svf = max(1.0 - (building_density / 1000), 0.12)
+        
+        # Long-wave radiation trapping (The Canyon Effect)
+        # Lower SVF means heat cannot escape back to space at night
+        trapped_heat_penalty = (1.0 - svf) * 6.5
+        
+        return svf, trapped_heat_penalty
+
+    def predict_health_risk(self, temp, humidity):
+        """Calculates Heat Index (HI) and Wet Bulb Globe Temperature (WBGT) impact."""
+        # Simplified Heat Index for real-time monitoring
+        heat_index = temp + (0.55 * (humidity * 100 - 55))
+        
+        if heat_index > 46:
+            return "🔴 EXTREME DANGER: Hyperthermia risk imminent.", "CRITICAL"
+        elif heat_index > 39:
+            return "🟠 WARNING: Heatstroke likely with prolonged exposure.", "SEVERE"
+        elif heat_index > 32:
+            return "🟡 CAUTION: Significant thermal fatigue detected.", "ELEVATED"
+        else:
+            return "🟢 NOMINAL: Thermal conditions stable.", "OPTIMAL"
+
+    def calculate_carbon_credits(self, temp_reduction):
+        """
+        Monetizes cooling into Carbon Offset Credits.
+        Assumption: 1C drop = 500 Tons of CO2 saved (reduced HVAC load).
+        """
+        co2_saved_tons = temp_reduction * 485 
+        market_rate_usd = 28.50  # Current EU-ETS approximate price
+        
+        return co2_saved_tons, co2_saved_tons * market_rate_usd
+
+def get_city_data():
+    """Strategic baseline data for Punjab Defense Sectors."""
+    return {
+        "Gurdaspur": {"lat": 32.0416, "lon": 75.4053, "base": 42.5, "hum": 0.52},
+        "Ferozpur": {"lat": 30.9250, "lon": 74.6225, "base": 46.2, "hum": 0.35},
+        "Ludhiana": {"lat": 30.9010, "lon": 75.8573, "base": 47.1, "hum": 0.44},
+        "Amritsar": {"lat": 31.6340, "lon": 74.8723, "base": 44.8, "hum": 0.40},
+        "Patiala": {"lat": 30.3398, "lon": 76.3869, "base": 43.5, "hum": 0.48}
     }
-    .main-stats { 
-        background-color: #0d1117; padding: 25px; border-radius: 15px; 
-        border: 1px solid #30363d; border-top: 5px solid #1f6feb;
-    }
-    .terminal-log {
-        background-color: #000000; color: #39ff14;
-        padding: 20px; border-radius: 10px;
-        font-family: 'Courier New', monospace;
-        height: 300px; overflow-y: auto; border: 1px solid #39ff14;
-    }
-    [data-testid="stMetricValue"] { color: #58a6ff !important; font-weight: 800; font-family: 'Orbitron', sans-serif; }
-    .feature-header { color: #58a6ff; font-weight: bold; border-bottom: 1px solid #30363d; padding-bottom: 5px; margin-bottom: 15px;}
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- LIVE CARBON TICKER ---
-st.markdown(f"""
-    <div class="ticker-bar">
-        LIVE MARKET: CARBON CREDIT $ {round(np.random.uniform(28, 29), 2)} ▲ | 
-        WIND VECTOR: NE 12.4 KM/H | 
-        SATELLITE SYNC: ACTIVE
-    </div>
-    """, unsafe_allow_html=True)
-
-if 'engine' not in st.session_state:
-    st.session_state.engine = AuraEngine()
-if 'protocol' not in st.session_state:
-    st.session_state.protocol = False
-
-# --- SIDEBAR ---
-with st.sidebar:
-    st.title("🛡️ SOVEREIGN v5.2")
-    cities = get_city_data()
-    city_name = st.selectbox("📍 GEOSPATIAL FOCUS", list(cities.keys()))
-    st.markdown("---")
-    green = st.slider("Forestry Density", 0.0, 1.0, 0.45)
-    albedo = st.slider("Albedo Surface Force", 0.0, 1.0, 0.35)
-    aqi = st.slider("Atmospheric PM2.5", 50, 500, 150)
-
-# --- AI LOGIC ---
-city = cities[city_name]
-aerosol_heat = (aqi - 100) * 0.035 if aqi > 100 else 0
-final_temp = st.session_state.engine.run_simulation(green, albedo, city['hum'], city['base']) + aerosol_heat
-delta = city['base'] - final_temp
-msg, risk_lvl = st.session_state.engine.predict_health_risk(final_temp, city['hum'])
-co2, revenue = st.session_state.engine.calculate_carbon_credits(delta)
-
-# --- DASHBOARD ---
-st.title(f"THERMAL DEFENSE GRID: {city_name.upper()}")
-st.markdown('<div class="main-stats">', unsafe_allow_html=True)
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("TEMP REDUCTION", f"-{round(delta, 1)}°C")
-c2.metric("THREAT LEVEL", risk_lvl)
-c3.metric("GRID STABILITY", f"{85 + int(delta)}%")
-c4.metric("WATER RECLAIMED", f"{int(delta*190)}k L")
-c5.metric("CARBON ROI", f"₹{int(revenue*84)} L")
-st.markdown('</div>', unsafe_allow_html=True)
-
-tabs = st.tabs(["🛰️ 3D DIGITAL TWIN", "🚑 BIO-HEALTH AI", "⚡ ENERGY ARBITRAGE", "📜 SOVEREIGN POLICY"])
-
-with tabs[0]:
-    st.markdown('<div class="feature-header">NEURAL WIND VECTORING & 3D CANYONS</div>', unsafe_allow_html=True)
-    b_data = pd.DataFrame({
-        "lat": [city['lat'] + np.random.normal(0, 0.007) for _ in range(120)],
-        "lon": [city['lon'] + np.random.normal(0, 0.007) for _ in range(120)],
-        "height": [np.random.randint(50, 550) for _ in range(120)],
-        "heat": [np.random.randint(150, 255) for _ in range(120)]
-    })
-    view = pdk.ViewState(latitude=city['lat'], longitude=city['lon'], zoom=14, pitch=60)
-    layer = pdk.Layer("ColumnLayer", data=b_data, get_position="[lon, lat]", get_elevation="height", 
-                      radius=35, get_fill_color="[heat, 40, 60, 200]", pickable=True)
-    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/dark-v10', initial_view_state=view, layers=[layer]))
-
-with tabs[1]:
-    st.markdown('<div class="feature-header">BIO-THERMAL STRESS ANALYSIS</div>', unsafe_allow_html=True)
-    st.error(f"**Aerosol Forcing:** PM2.5 levels are trapping {round(aerosol_heat, 2)}°C of heat.")
-    fig = go.Figure(go.Indicator(
-        mode = "gauge+number", value = final_temp,
-        title = {'text': "District Wet Bulb Temperature (°C)"},
-        gauge = {'axis': {'range': [20, 50]}, 'bar': {'color': "#1f6feb"}}
-    ))
-    st.plotly_chart(fig, use_container_width=True)
-
-with tabs[2]:
-    st.markdown('<div class="feature-header">V2G ENERGY & GRID SELF-HEALING</div>', unsafe_allow_html=True)
-    st.write(f"Grid Status: **REBALANCING**. V2G Buffer: **{int(delta*18)} MWh**.")
-    st.line_chart(pd.DataFrame(np.random.randn(20, 2), columns=['Grid Frequency', 'V2G Relief']))
-
-with tabs[3]:
-    st.markdown('<div class="feature-header">SOVEREIGN POLICY MANIFEST</div>', unsafe_allow_html=True)
-    manifest = f"SOVEREIGN MANIFEST: {city_name}\n" + "-"*30 + f"\nDelta: {round(delta, 1)}C\nRevenue: ₹{int(revenue*84)}L"
-    st.download_button("📥 DOWNLOAD DATA-AUTH MANIFEST", manifest, file_name=f"Manifest_{city_name}.txt")
-
-# --- PROTOCOL ---
-st.divider()
-if st.button("🔴 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
-    st.session_state.protocol = True
-
-if st.session_state.protocol:
-    st.snow()
-    placeholder = st.empty()
-    steps = ["📡 Establishing Sat Uplink...", "🧠 Neural SVF Mapping...", "🌪️ Wind Dynamics Calculation...", "✅ PROTOCOL ENGAGED."]
-    log = ""
-    for step in steps:
-        log += f"> {step}<br>"
-        placeholder.markdown(f'<div class="terminal-log">{log}</div>', unsafe_allow_html=True)
-        time.sleep(0.5)
