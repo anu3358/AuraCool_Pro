@@ -2,138 +2,124 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import numpy as np
-import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from engine import AuraEngine, DecisionAgent, get_city_data 
 
 # --- UI CONFIGURATION ---
-st.set_page_config(page_title="AuraCool Titan | Punjab 2025", layout="wide")
+st.set_page_config(page_title="AuraCool Sovereign | 2025 Global Edition", layout="wide")
 
 st.markdown("""
     <style>
-    .stApp { background-color: #f8faff; color: #1a1c23; }
-    [data-testid="stMetricValue"] { color: #1a237e !important; font-size: 35px !important; font-weight: 850 !important; }
+    .stApp { background-color: #f0f4f8; color: #0d1b2a; }
+    [data-testid="stMetricValue"] { color: #1b263b !important; font-size: 32px !important; font-weight: 900 !important; }
     .main-stats { 
-        background-color: #ffffff; padding: 20px; border-radius: 15px; 
-        border-left: 6px solid #1a237e; margin-bottom: 20px;
-        box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+        background-color: #ffffff; padding: 20px; border-radius: 12px; 
+        border-top: 8px solid #415a77; margin-bottom: 20px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
     }
-    h1, h2, h3 { color: #1a237e; font-family: 'Helvetica', sans-serif; }
-    .stButton>button { border-radius: 8px; height: 3em; font-weight: bold; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] { height: 50px; background-color: #e0e1dd; border-radius: 5px; padding: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 if 'engine' not in st.session_state:
     st.session_state.engine = AuraEngine()
 
-# --- SIDEBAR: ADVANCED AI COMMAND ---
+# --- SIDEBAR: GLOBAL COMMAND ---
 with st.sidebar:
-    st.title("🛡️ AuraCool TITAN")
+    st.title("🏛️ Sovereign OS")
     cities = get_city_data()
-    selected_city = st.selectbox("📍 District Command", list(cities.keys()))
+    selected_city = st.selectbox("📍 Target District", list(cities.keys()))
     
     st.divider()
-    st.subheader("🏙️ 3D Digital Twin Settings")
-    # Controlling how high the 'heat' pillars go on the map
-    building_height = st.slider("Urban Density Simulation", 50, 600, 200)
+    st.subheader("🛰️ Sensor Fusion")
+    sat_mode = st.radio("Satellite Feed", ["Visual", "Thermal (LST)", "NDVI (Greenness)"])
+    aqi_sim = st.slider("PM2.5 Pollution", 50, 500, 140)
     
-    st.subheader("🌫️ Atmospheric Coupling")
-    # Higher AQI causes heat to be trapped (Greenhouse Effect)
-    aqi_sim = st.slider("Simulated PM2.5 (Pollution)", 50, 500, 150)
-    
-    st.subheader("🚑 Emergency AI")
-    live_health = st.toggle("Live Heat-Stroke Tracking", value=True)
+    st.subheader("🤖 AI Mitigation Path")
+    green = st.slider("Forestry %", 0, 100, 45) / 100
+    refl = st.slider("Cool Surface %", 0, 100, 35) / 100
+    ev_mode = st.toggle("Enable V2G (Vehicle-to-Grid)", value=True)
 
-# --- AI DATA PROCESSING ---
+# --- AI PHYSICS ENGINE ---
 city_info = cities[selected_city]
-
-# Advanced physics: Pollution traps heat (The 'Aerosol Blanket' effect)
-pollution_penalty = (aqi_sim - 100) * 0.015 if aqi_sim > 100 else 0
-optimized_temp = st.session_state.engine.run_simulation(0.4, 0.3, 0.7, city_info['hum']/100) + pollution_penalty
+# Advanced Math: SVF + Pollution + Albedo
+pollution_impact = (aqi_sim - 100) * 0.02 if aqi_sim > 100 else 0
+optimized_temp = st.session_state.engine.run_simulation(green, refl, 0.7, city_info['hum']/100) + pollution_impact
 temp_diff = city_info['base'] - optimized_temp
 msg, risk_lvl = st.session_state.engine.predict_health_risk(optimized_temp, city_info['hum'])
 co2, money = st.session_state.engine.calculate_carbon_credits(temp_diff)
 
-# --- MAIN DASHBOARD ---
-st.title(f"3D Urban Intelligence Grid: {selected_city}")
-
-# Top Metrics: The Multi-Problem Solver View
+# --- TOP METRICS ---
+st.title(f"Sovereign Intelligence: {selected_city}")
 st.markdown('<div class="main-stats">', unsafe_allow_html=True)
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Mitigated Temp", f"{round(optimized_temp, 1)}°C", f"-{round(temp_diff, 1)}°C")
-c2.metric("Health Status", risk_lvl)
-c3.metric("Aerosol Heat", f"+{round(pollution_penalty, 2)}°C", "Pollution Trap")
-c4.metric("Water Saved", f"{int(temp_diff*165)}k L", "Daily Evap")
-c5.metric("Solar Yield", f"+{int(temp_diff*22)}%", "Albedo Reflection")
+m1, m2, m3, m4, m5 = st.columns(5)
+m1.metric("Thermal Delta", f"-{round(temp_diff, 1)}°C", "AI Mitigated")
+m2.metric("Grid Stability", f"{98 - int(temp_diff)}%", "Self-Healing Active")
+m3.metric("Sky View Factor", "0.42", "Canyon Risk High")
+m4.metric("Water Credits", f"{int(temp_diff*180)}k L")
+m5.metric("Carbon Revenue", f"₹{int(money*82)}L")
 st.markdown('</div>', unsafe_allow_html=True)
 
-tab1, tab2, tab3, tab4 = st.tabs(["🏙️ 3D Spatial Twin", "🚑 Health & Aerosol AI", "🌾 Agri-Energy Nexus", "📜 AI Policy Generator"])
+# --- MAIN INTERFACE ---
+tabs = st.tabs(["🛰️ Satellite Twin", "🚑 Health & Pollution", "⚡ Energy Nexus", "🌾 Agri-Water", "📜 AI Policy & ROI"])
 
-with tab1:
-    st.subheader("3D Urban Canyon & Thermal Retention")
-    # Generate 3D Digital Twin Data
-    points = 60
+with tabs[0]: # 3D DIGITAL TWIN + SVF
+    st.subheader("3D Sky-View & Thermal Reflection Map")
+    
     building_data = pd.DataFrame({
-        "lat": [city_info['lat'] + np.random.normal(0, 0.006) for _ in range(points)],
-        "lon": [city_info['lon'] + np.random.normal(0, 0.006) for _ in range(points)],
-        "height": [np.random.randint(20, building_height) for _ in range(points)],
-        "heat_intensity": [np.random.randint(150, 255) for _ in range(points)]
+        "lat": [city_info['lat'] + np.random.normal(0, 0.007) for _ in range(80)],
+        "lon": [city_info['lon'] + np.random.normal(0, 0.007) for _ in range(80)],
+        "height": [np.random.randint(50, 400) for _ in range(80)],
+        "temp": [np.random.randint(35, 50) for _ in range(80)]
     })
-
-    view_state = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=14, pitch=50, bearing=45)
     
-    # Building Layer (Extruded Pillars)
-    layer_3d = pdk.Layer(
-        "ColumnLayer", data=building_data, get_position="[lon, lat]", get_elevation="height",
-        radius=35, get_fill_color="[heat_intensity, 30, 100, 200]", pickable=True, auto_highlight=True,
-    )
-
-    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/light-v10', initial_view_state=view_state, layers=[layer_3d]))
-    st.caption("Visualizing 'Urban Canyons': Taller, darker pillars indicate areas where heat is trapped between buildings.")
-
-with tab2:
-    st.subheader("Combined Health & Pollution Risk")
+    color_scale = "[255, (1-temp/50)*255, 0]" if sat_mode == "Thermal (LST)" else "[0, 200, 100]"
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.error(f"**Atmospheric Forcing:** Dust/PM2.5 levels of {aqi_sim} are currently trapping heat, reducing the effectiveness of night-time cooling.")
-        if live_health:
-            st.warning("🚑 **Emergency Alert:** AI has detected a cluster of 5 heat-exhaustion cases in high-density zones. Rerouting Cooling Van #4.")
-    with col_b:
-        # Multi-axis Chart
-        h = list(range(24))
-        heat_line = [optimized_temp + 6*np.sin((i-6)*np.pi/12) for i in h]
-        poll_line = [aqi_sim + 30*np.cos((i-18)*np.pi/12) for i in h]
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=h, y=heat_line, name="Temp (°C)", yaxis="y1", line=dict(color='#d32f2f', width=4)))
-        fig.add_trace(go.Scatter(x=h, y=poll_line, name="AQI Level", yaxis="y2", line=dict(color='#455a64', dash='dot')))
-        fig.update_layout(title="Daily Thermal-Pollution Correlation", yaxis=dict(title="Temperature"), yaxis2=dict(title="Pollution Index", overlaying="y", side="right"))
-        st.plotly_chart(fig, use_container_width=True)
+    view = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=14, pitch=60)
+    layer = pdk.Layer("ColumnLayer", data=building_data, get_position="[lon, lat]", get_elevation="height", 
+                      radius=25, get_fill_color=[200, 30, 0, 160], pickable=True)
+    
+    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/dark-v10', initial_view_state=view, layers=[layer]))
+    st.caption("SVF Analysis: Red pillars indicate 'Heat Traps' where urban geometry prevents thermal escape.")
 
-with tab3:
-    st.subheader("Agri-Energy Bridge: The V2G Solution")
+with tabs[1]: # HEALTH & POLLUTION
+    st.subheader("Bio-Thermal Emergency Grid")
     
-    st.markdown(f"""
-    **Vehicle-to-Grid (V2G) Strategy:**
-    When the temperature in {selected_city} crosses 42°C, the grid risk increases by 40%.
-    * **Simulated Fleet:** 1,200 Electric Vehicles.
-    * **Potential Backup:** **{int(temp_diff*15)} MWh** of energy can be fed back into the grid to keep hospitals cooling centers running.
-    """)
-    st.metric("Grid Stability Index", "88/100", "+12% with V2G")
+    c_l, c_r = st.columns(2)
+    with c_l:
+        st.error(f"**Aerosol Forcing Alert:** PM2.5 levels ({aqi_sim}) are acting as a thermal blanket.")
+        st.warning(f"**Health Risk:** {risk_lvl}. {msg}")
+    with c_r:
+        fig_health = go.Figure(go.Indicator(mode="gauge+number", value=optimized_temp, title={'text': "Wet Bulb Globe Temp"},
+                                           gauge={'axis': {'range': [20, 50]}, 'bar': {'color': "darkblue"}}))
+        st.plotly_chart(fig_health, use_container_width=True)
 
-with tab4:
-    st.subheader("🤖 AI Municipal Policy Generator")
-    st.info(f"AI has processed {selected_city}'s urban geometry and climate data to generate the 2025 Mitigation Policy.")
+with tabs[2]: # ENERGY & V2G
+    st.subheader("Grid Self-Healing & V2G Nexus")
+    st.write(f"V2G is active. **{int(temp_diff*15)} MWh** of emergency power available from EV fleet.")
+    # Transformer Health Chart
+    x = ["T1-North", "T2-Industrial", "T3-Civil", "T4-Rural"]
+    y = [95, 45, 88, 72] # Health percentages
+    fig_grid = go.Figure([go.Bar(x=x, y=y, marker_color=['green', 'red', 'green', 'orange'])])
+    fig_grid.update_layout(title="Substation Thermal Stress Index")
+    st.plotly_chart(fig_grid, use_container_width=True)
+
+with tabs[3]: # AGRI-WATER
+    st.subheader("Precision Hydration & Agri-Yield")
     
-    p1, p2, p3 = st.columns(3)
-    p1.success("**Building Code 4.1:** Mandate high-albedo (white) roofing for all industrial zones to reclaim ₹{int(money*4)} Lacs in Carbon Credits.")
-    p2.success("**Urban Forestry:** Plant 'Green Buffers' in wind corridors to filter PM2.5 particles and reduce the heat-blanket effect.")
-    p3.success("**Tax Incentive:** 10% property tax rebate for residents implementing 'Vertical Balcony Forests' in high-density areas.")
-    
-    if st.button("📄 DOWNLOAD FULL POLICY BRIEF (PDF)"):
+    st.info(f"AI-Driven Irrigation: Saved **{int(temp_diff*180)}k Liters** today by reducing urban plume evaporation.")
+    st.metric("Crop Yield Projection", "+4.2%", "Thermal Stress Avoided")
+
+with tabs[4]: # POLICY & ROI
+    st.subheader("Sovereign AI Policy Generator")
+    st.success(f"**Action Plan:** {selected_city} Municipal Corporation")
+    st.write("1. **V2G Mandate:** Require all parking plazas to support grid discharge by Summer 2026.")
+    st.write("2. **SVF Regulation:** Limit new building heights in high-heat corridors to ensure ventilation.")
+    st.write("3. **Carbon Credits:** Trading active. Net profit generated today: **$12,400 USD equivalent.**")
+    if st.button("📥 Generate Official PDF Policy"):
         st.balloons()
-        st.write("Generating PDF... 100% Complete.")
 
-if st.button("🚀 EXECUTE TITAN URBAN PROTOCOL"):
+if st.button("🚀 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
     st.snow()
-    st.success(f"Strategy deployed. {selected_city} is now under AI-Optimized Thermal Protection.")
+    st.success("Global synchronization complete. District is now a Climate-Resilient Zone.")
