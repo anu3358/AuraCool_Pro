@@ -11,21 +11,18 @@ if 'engine' not in st.session_state:
 
 sectors = get_sector_data()
 
-# --- HIGH-END UI STYLING ---
 st.markdown("""
     <style>
     .stApp { background-color: #fcfcfc; }
     [data-testid="stMetricValue"] { font-size: 28px; color: #1e3a8a !important; font-weight: 800; }
     .status-card { background: #1e293b; color: #38bdf8; padding: 20px; border-radius: 12px; border-top: 6px solid #ef4444; font-family: monospace; }
-    .intervention-box { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .intervention-box { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HEADER ---
 st.title("🛡️ AuraMaster: Sovereign Urban Command")
-st.write("Projecting Thermal Defense Strategies for the State of Punjab | 2025 Release")
+st.write("Projecting Thermal Defense Strategies for the State of Punjab")
 
-# --- CONTROL CENTER ---
 col_map, col_controls = st.columns([2, 1])
 
 with col_controls:
@@ -49,62 +46,40 @@ with col_controls:
     """, unsafe_allow_html=True)
 
 with col_map:
-    st.subheader("📡 Thermal Intelligence Twin")
+    st.subheader("📡 Live Thermal Digital Twin")
     view = pdk.ViewState(latitude=s['lat'], longitude=s['lon'], zoom=11, pitch=45)
-    # Heat Cloud Generation
     map_data = pd.DataFrame({
-        "lat": [s['lat'] + np.random.normal(0, 0.012) for _ in range(200)],
-        "lon": [s['lon'] + np.random.normal(0, 0.012) for _ in range(200)],
-        "heat": [np.random.randint(100, 700) for _ in range(200)]
+        "lat": [s['lat'] + np.random.normal(0, 0.012) for _ in range(150)],
+        "lon": [s['lon'] + np.random.normal(0, 0.012) for _ in range(150)],
+        "heat": [np.random.randint(100, 700) for _ in range(150)]
     })
     layer = pdk.Layer("ColumnLayer", data=map_data, get_position="[lon, lat]", get_elevation="heat", radius=100, get_fill_color="[220, 38, 38, 160]")
     st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view))
 
 st.divider()
 
-# --- THE NEXUS TABS (THE WINNING FEATURES) ---
 t1, t2, t3, t4 = st.tabs(["⚡ GRID (V2G)", "💧 WATER NEXUS", "🚑 LABOR PROTECTION", "🛰️ COMPLIANCE"])
 
 with t1:
     st.subheader("Virtual Power Plant: Grid Resilience")
-    st.write("Harvesting energy from thousands of EVs to stabilize the grid during heat spikes.")
-    st.metric("V2G Relief Available", f"{mwh} MWh", help="Available for dispatch to industrial zones.")
-    
-
-[Image of hydrogen fuel cell]
-
+    st.metric("V2G Relief Available", f"{mwh} MWh")
+    st.write("Using EV batteries to stabilize the grid during extreme heat events.")
 
 with t2:
     st.subheader("Agricultural Hydro-Thermal Recovery")
-    st.write("Water saved by reducing urban 'Heat Thirst' and preventing atmospheric loss.")
-    st.metric("Water Preserved", f"{water} Million Liters", delta="Preserved for Irrigation")
-    
-
-[Image of the global water cycle]
-
+    st.metric("Water Preserved", f"{water} Million Liters")
+    st.write("Groundwater saved by urban cooling (reduced evaporation flux).")
 
 with t3:
     st.subheader("🚑 Physiological Survival Limits")
-    col_h1, col_h2 = st.columns(2)
-    with col_h1:
-        st.metric("Bio-Health Status", status)
-        st.metric("Work-Rest Cycle", work_ratio)
-    with col_h2:
-        st.info(f"**Action Plan:** {health_advice}")
-        st.progress(s['temp']/50)
-    
+    c1, c2 = st.columns(2)
+    c1.metric("Survival Status", status)
+    c2.metric("Work-Rest Cycle", work_ratio)
+    st.warning(f"**Bio-Advisory:** {health_advice}")
 
 with t4:
     st.subheader("Autonomous Sentinel Audit")
-    st.markdown(f"""
-    <div class="status-card">
-        > SCANNING SECTOR: {sector_name.upper()}...<br>
-        > DATA SOURCE: Sentinel-3 Land Surface Temperature (LST)...<br>
-        > ALERT: Thermal anomaly detected in industrial cluster 4.<br>
-        > ACTION: Mandatory albedo upgrade notice issued to 14 facilities.
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""<div class="status-card">> SCANNING: {sector_name.upper()}...<br>> SOURCE: Sentinel-3 LST IR Data...<br>> STATUS: Anomaly detected in industrial cluster.<br>> ACTION: Mandate issued.</div>""", unsafe_allow_html=True)
 
-if st.button("🚀 EXECUTE SOVEREIGN DEFENSE PROTOCOL"):
+if st.button("🚀 EXECUTE SOVEREIGN PROTOCOL"):
     st.balloons()
-    st.toast("State-Wide Protocol Active.")
