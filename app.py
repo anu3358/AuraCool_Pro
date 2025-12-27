@@ -9,50 +9,62 @@ from engine import AuraEngine, DecisionAgent, get_city_data
 # --- UI CONFIGURATION ---
 st.set_page_config(page_title="AuraCool OS | Punjab 2025", layout="wide")
 
-# HIGH-VISIBILITY THEME: Slate & Neon
+# CLEAN LIGHT THEME: Arctic White & Midnight Blue
 st.markdown("""
     <style>
-    /* Main Background - Dark Slate for better contrast than pure black */
+    /* Main Background - Clean Off-White */
     .stApp { 
-        background-color: #1a1c23; 
-        color: #ffffff; 
+        background-color: #f8f9fa; 
+        color: #1a1c23; 
     }
     
-    /* Metrics Styling - Neon Cyan with high readability */
+    /* Metrics Styling - Deep Teal for professional look */
     [data-testid="stMetricValue"] { 
-        color: #00f2ff !important; 
+        color: #00796b !important; 
         font-size: 38px !important; 
         font-weight: 800 !important; 
     }
     
-    /* Sidebar - Slightly darker but with clear borders */
-    .stSidebar { 
-        background-color: #111217; 
-        border-right: 2px solid #ff00ff; 
+    /* Metric Label - Darker Gray */
+    [data-testid="stMetricLabel"] {
+        color: #455a64 !important;
     }
     
-    /* Metric Cards - Boxed with border for maximum visibility */
+    /* Sidebar - Crisp White with subtle shadow */
+    .stSidebar { 
+        background-color: #ffffff; 
+        border-right: 1px solid #dee2e6; 
+    }
+    
+    /* Metric Cards - White boxes with professional shadow */
     .main-stats { 
-        background-color: #252833; 
+        background-color: #ffffff; 
         padding: 25px; 
         border-radius: 12px; 
-        border: 2px solid #3d4251; 
+        border: 1px solid #e0e0e0; 
         margin-bottom: 25px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
     }
     
-    /* Headers - Neon Pink */
+    /* Headers - Professional Midnight Blue */
     h1, h2, h3 { 
-        color: #ff00ff; 
+        color: #1a237e; 
         font-family: 'Helvetica Neue', sans-serif; 
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
     }
 
     /* Tab Styling */
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; }
-    .stTabs [data-baseweb="tab"] { color: #ffffff; font-size: 18px; }
-    .stTabs [aria-selected="true"] { color: #ff00ff !important; border-bottom: 3px solid #ff00ff; }
+    .stTabs [data-baseweb="tab"] { color: #607d8b; font-size: 18px; }
+    .stTabs [aria-selected="true"] { color: #1a237e !important; border-bottom: 3px solid #1a237e; }
+    
+    /* Slider & Button Styling */
+    .stButton>button {
+        background-color: #1a237e;
+        color: white;
+        border-radius: 8px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -109,7 +121,7 @@ with tab1:
 
     view_state = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=13, pitch=0)
     
-    # Heatmap color range: Purple to Cyan to White (Highest Visibility)
+    # Heatmap color range: Blue (Cool) to Red (Hot) - Standard High Visibility
     layer = pdk.Layer(
         "HeatmapLayer",
         data=map_df,
@@ -117,16 +129,16 @@ with tab1:
         get_weight="intensity",
         radius_pixels=50,
         color_range=[
-            [43, 0, 43, 0],    # Transparent
-            [128, 0, 128, 100], # Purple
-            [0, 242, 255, 150], # Neon Cyan
-            [255, 0, 255, 200], # Neon Pink
-            [255, 255, 255, 255]  # White
+            [232, 245, 233, 0],   # Light Green/Transp
+            [129, 212, 250, 150], # Sky Blue
+            [255, 235, 59, 200],  # Yellow
+            [255, 152, 0, 220],   # Orange
+            [211, 47, 47, 255]    # High Red
         ]
     )
 
     st.pydeck_chart(pdk.Deck(
-        map_style='mapbox://styles/mapbox/dark-v10',
+        map_style='mapbox://styles/mapbox/light-v10',
         initial_view_state=view_state,
         layers=[layer],
     ))
@@ -138,14 +150,15 @@ with tab2:
     optimized_load = [b * (1 - (temp_diff*0.04)) for b in baseline_load]
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=hours, y=baseline_load, name="Current Grid Demand", line=dict(color='white', width=2, dash='dot')))
-    fig.add_trace(go.Scatter(x=hours, y=optimized_load, name="AI Optimized Demand", line=dict(color='#00f2ff', width=4)))
+    fig.add_trace(go.Scatter(x=hours, y=baseline_load, name="Current Grid Demand", line=dict(color='#78909c', width=2, dash='dot')))
+    fig.add_trace(go.Scatter(x=hours, y=optimized_load, name="AI Optimized Demand", line=dict(color='#1a237e', width=4)))
     
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white",
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="#1a1c23",
         xaxis_title="Hour of Day", yaxis_title="Load (Megawatts)"
     )
     st.plotly_chart(fig, use_container_width=True)
+    
     
 
 with tab3:
