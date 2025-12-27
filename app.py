@@ -4,125 +4,174 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import time
+from datetime import datetime
+from io import BytesIO
 from engine import AuraEngine, get_city_data 
 
-# --- UI CONFIGURATION ---
-st.set_page_config(page_title="AuraCool Sovereign | Titan OS", layout="wide")
+# --- UI CONFIGURATION & THEME ---
+st.set_page_config(page_title="AuraCool Sovereign | 2025 Global Edition", layout="wide")
 
-# Custom CSS for the "Terminal" look
 st.markdown("""
     <style>
-    .stApp { background-color: #f0f4f8; }
+    .stApp { background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%); color: #0d1b2a; }
+    .terminal-header { color: #00ff41; font-weight: bold; margin-bottom: 5px; }
     .terminal-log {
         background-color: #0d1b2a; color: #00ff41;
-        padding: 15px; border-radius: 5px;
+        padding: 20px; border-radius: 8px;
         font-family: 'Courier New', Courier, monospace;
-        height: 250px; overflow-y: auto; border: 1px solid #415a77;
+        height: 300px; overflow-y: auto; border: 2px solid #415a77;
+        box-shadow: 0px 0px 15px rgba(0, 255, 65, 0.2);
     }
     .main-stats { 
-        background-color: #ffffff; padding: 20px; border-radius: 12px; 
-        border-top: 8px solid #1a237e; margin-bottom: 20px;
+        background-color: #ffffff; padding: 25px; border-radius: 15px; 
+        border-left: 8px solid #1a237e; margin-bottom: 25px;
         box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
     }
+    .stButton>button { width: 100%; border-radius: 10px; height: 3.5em; background-color: #1a237e; color: white; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SESSION STATE INITIALIZATION ---
+# --- ENGINE DATA (Fixed to include Gurdaspur & Ferozpur) ---
+def get_updated_cities():
+    data = get_city_data()
+    # Adding the new districts requested
+    data["Gurdaspur"] = {"lat": 32.0416, "lon": 75.4053, "base": 42.1, "hum": 52}
+    data["Ferozpur"] = {"lat": 30.9250, "lon": 74.6225, "base": 45.8, "hum": 32}
+    return data
+
 if 'engine' not in st.session_state:
     st.session_state.engine = AuraEngine()
 if 'protocol_active' not in st.session_state:
     st.session_state.protocol_active = False
 
-# --- SIDEBAR ---
+# --- SIDEBAR COMMANDS ---
 with st.sidebar:
-    st.title("🏛️ Sovereign OS")
-    cities = get_city_data()
-    selected_city = st.selectbox("📍 District Command", list(cities.keys()))
+    st.title("🛡️ Sovereign OS v4.0")
+    cities = get_updated_cities()
+    selected_city = st.selectbox("📍 Select Strategic District", sorted(list(cities.keys())))
     
     st.divider()
-    st.subheader("🛰️ Sensor Fusion")
-    aqi_sim = st.slider("PM2.5 Pollution", 50, 500, 140)
-    green = st.slider("Forestry %", 0, 100, 45) / 100
-    refl = st.slider("Cool Surface %", 0, 100, 35) / 100
-
-# --- DATA PROCESSING ---
+    st.subheader("🛰️ Intelligence Inputs")
+    aqi_sim = st.slider("Aerosol Density (PM2.5)", 50, 500, 165)
+    green = st.slider("Reforestation Target %", 0, 100, 50) / 100
+    refl = st.slider("Cool Roof Coverage %", 0, 100, 40) / 100
+    
+# --- CALCULATIONS ---
 city_info = cities[selected_city]
-pollution_impact = (aqi_sim - 100) * 0.02 if aqi_sim > 100 else 0
-optimized_temp = st.session_state.engine.run_simulation(green, refl, city_info['hum']/100, city_info['base']) + pollution_impact
+# Advanced forcing logic
+p_penalty = (aqi_sim - 100) * 0.025 if aqi_sim > 100 else 0
+optimized_temp = st.session_state.engine.run_simulation(green, refl, city_info['hum']/100, city_info['base']) + p_penalty
 temp_diff = city_info['base'] - optimized_temp
 msg, risk_lvl = st.session_state.engine.predict_health_risk(optimized_temp, city_info['hum'])
 co2, money = st.session_state.engine.calculate_carbon_credits(temp_diff)
 
-# --- HEADER METRICS ---
-st.title(f"District Intelligence: {selected_city}")
+# --- DASHBOARD HEADER ---
+st.title(f"District Defense Matrix: {selected_city}")
 st.markdown('<div class="main-stats">', unsafe_allow_html=True)
-m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Current Delta", f"-{round(temp_diff, 1)}°C", "AI Mitigated")
-m2.metric("Health Risk", risk_lvl)
-m3.metric("Grid Load", f"{95 - int(temp_diff)}%", "V2G Enabled")
-m4.metric("Water Saved", f"{int(temp_diff*180)}k L")
-m5.metric("Credits Earned", f"₹{int(money*82)}L")
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Current Thermal Delta", f"-{round(temp_diff, 1)}°C", f"Ambient: {city_info['base']}°C")
+c2.metric("Strategic Risk Index", risk_lvl)
+c3.metric("Water Reclaimed", f"{int(temp_diff*210)}k L", "Daily Evap Savings")
+c4.metric("Carbon Revenue", f"₹{int(money*85)}L", "+12% Growth")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TABS ---
-tabs = st.tabs(["🏙️ 3D Digital Twin", "🚑 Health & Pollution", "⚡ Energy Nexus", "🌾 Agri-Water", "📜 Policy Generator"])
+# --- MAIN INTERFACE TABS ---
+t1, t2, t3, t4 = st.tabs(["🏙️ 3D Tactical Twin", "🚑 Bio-Intelligence", "⚡ V2G Energy Grid", "📜 Global Policy Office"])
 
-with tabs[0]:
-    st.subheader("3D Urban Canyon Analysis")
-    building_data = pd.DataFrame({
-        "lat": [city_info['lat'] + np.random.normal(0, 0.006) for _ in range(70)],
-        "lon": [city_info['lon'] + np.random.normal(0, 0.006) for _ in range(70)],
-        "height": [np.random.randint(50, 400) for _ in range(70)],
-        "heat": [np.random.randint(150, 255) for _ in range(70)]
+with t1:
+    st.subheader("3D Heat-Retention Geometry")
+    # Generates a 3D view of "Urban Canyons" in the selected district
+    points = 100
+    building_df = pd.DataFrame({
+        "lat": [city_info['lat'] + np.random.normal(0, 0.008) for _ in range(points)],
+        "lon": [city_info['lon'] + np.random.normal(0, 0.008) for _ in range(points)],
+        "height": [np.random.randint(40, 500) for _ in range(points)],
+        "heat": [np.random.randint(100, 255) for _ in range(points)]
     })
-    view = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=14, pitch=55)
-    layer = pdk.Layer("ColumnLayer", data=building_data, get_position="[lon, lat]", get_elevation="height", 
-                      radius=30, get_fill_color="[heat, 30, 80, 200]", pickable=True)
-    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/light-v10', initial_view_state=view, layers=[layer]))
+    view = pdk.ViewState(latitude=city_info['lat'], longitude=city_info['lon'], zoom=14, pitch=50)
+    layer = pdk.Layer("ColumnLayer", data=building_df, get_position="[lon, lat]", get_elevation="height", 
+                      radius=35, get_fill_color="[heat, 50, 50, 200]", pickable=True)
+    st.pydeck_chart(pdk.Deck(map_style='mapbox://styles/mapbox/dark-v10', initial_view_state=view, layers=[layer]))
+    st.caption("Visualizing height-to-heat correlation: Taller pillars indicate 'Heat Canyons' requiring priority mitigation.")
 
-with tabs[1]:
+with t2:
+    st.subheader("Health & Atmospheric Risk Matrix")
     
-    st.error(f"**Aerosol Blanket Detected:** AQI {aqi_sim} is trapping {round(pollution_impact, 2)}°C additional heat.")
-    st.info(f"**Health Advisory:** {msg}")
+    st.warning(f"**Aerosol Blanket Alert:** High AQI ({aqi_sim}) in {selected_city} is currently trapping heat, increasing night-time cooling lag.")
+    st.info(f"**AI Health Prediction:** {msg}")
 
-with tabs[2]:
-    st.subheader("V2G Energy & Solar Harvesting")
-    st.write(f"V2G active. Current backup potential: **{int(temp_diff*15)} MWh**.")
-    fig_grid = go.Figure([go.Bar(x=["North", "South", "Central", "Rural"], y=[90, 40, 85, 70], marker_color=['blue']*4)])
-    st.plotly_chart(fig_grid, use_container_width=True)
-
-with tabs[3]:
+with t3:
+    st.subheader("Vehicle-to-Grid (V2G) Optimization")
     
-    st.subheader("Precision Hydration Index")
-    st.metric("Crop Heat Stress", "Low", f"-{int(temp_diff*5)}% stress")
 
-with tabs[4]:
-    st.subheader("📜 Official Policy & Economic Report")
-    # FIX: Generating a real text blob for the download button
-    report = f"AuraCool Policy Report - {selected_city}\n" + "="*30 + \
-             f"\nMitigated Temp: {round(optimized_temp, 1)}C\nCarbon Credits: ₹{int(money*82)}L\nRisk Level: {risk_lvl}"
+[Image of hydrogen fuel cell]
+
+    # Simulating grid stability
+    hours = list(range(24))
+    load = [60 + 20*np.sin((h-6)*np.pi/12) for h in hours]
+    v2g_relief = [l - (temp_diff*2.5) for l in load]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=hours, y=load, name="Standard Load", line=dict(color='gray', dash='dot')))
+    fig.add_trace(go.Scatter(x=hours, y=v2g_relief, name="Sovereign Optimized", line=dict(color='#1a237e', width=4)))
+    st.plotly_chart(fig, use_container_width=True)
+
+with t4:
+    st.subheader("🤖 Policy Brief & Revenue Export")
+    # THE "FIXED" PDF/REPORT LOGIC
+    report_content = f"""
+    OFFICIAL CLIMATE DEFENSE PROTOCOL: {selected_city.upper()}
+    DATE GENERATED: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    ----------------------------------------------------------
+    1. THERMAL TARGET: Mitigated to {round(optimized_temp, 1)}°C
+    2. HEALTH RISK: {risk_lvl}
+    3. CARBON REVENUE: ₹{int(money*85)} Lakhs Projected
     
-    st.download_button(label="📥 Download Policy Brief (PDF/Text)", data=report, file_name=f"Policy_{selected_city}.txt")
+    DIRECTIVES:
+    - Enforce 'Cool Roof' Albedo standards (>0.6) for all industrial zones in {selected_city}.
+    - Activate V2G grid balancing during peak thermal load (14:00 - 17:00).
+    - Deploy Green Buffer Zones in the North-East wind corridors.
+    ----------------------------------------------------------
+    AUTHENTICATION: Sovereign AI v4.0 Secure
+    """
+    
+    # Robust download buffer
+    buf = BytesIO()
+    buf.write(report_content.encode())
+    buf.seek(0)
+    
+    st.download_button(
+        label="📥 DOWNLOAD OFFICIAL STRATEGIC POLICY",
+        data=buf,
+        file_name=f"Sovereign_Policy_{selected_city}.txt",
+        mime="text/plain"
+    )
+    st.success("Report is ready for municipal authorization.")
 
-# --- FOOTER: THE "INITIATE" LOGIC ---
+# --- THE GRAND FINALE: SOVEREIGN PROTOCOL ---
 st.divider()
-if st.button("🚀 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
-    st.session_state.protocol_active = True
+col_btn, col_spacer = st.columns([1, 2])
+with col_btn:
+    if st.button("🚀 INITIATE GLOBAL SOVEREIGN PROTOCOL"):
+        st.session_state.protocol_active = True
 
 if st.session_state.protocol_active:
     st.snow()
     log_placeholder = st.empty()
     logs = [
-        f"Connecting to {selected_city} Smart Grid...",
-        "Synchronizing Albedo Sensors...",
-        "Applying Urban Forestry algorithm...",
-        "Initiating V2G Battery discharge...",
-        "System Stable. District Protected."
+        f"Connecting to {selected_city} Municipal Grid...",
+        "Bypassing standard thermal limits...",
+        "Synchronizing satellite infrared telemetry...",
+        "Initiating 'Sovereign' V2G discharge sequence...",
+        "Calculating Sky-View Factor (SVF) adjustments...",
+        "PROTOCOL ACTIVE: District is now Climate-Resilient."
     ]
     
-    # Simulate a scrolling terminal log
-    log_text = ""
+    current_logs = ""
     for line in logs:
-        log_text += f"> {line}<br>"
-        log_placeholder.markdown(f'<div class="terminal-log">{log_text}</div>', unsafe_allow_html=True)
-        time.sleep(0.5)
+        current_logs += f"<div class='terminal-header'>[ACCESS GRANTED]</div> {line}<br>"
+        log_placeholder.markdown(f'<div class="terminal-log">{current_logs}</div>', unsafe_allow_html=True)
+        time.sleep(0.6)
+    
+    if st.button("Reset Command"):
+        st.session_state.protocol_active = False
+        st.rerun()
